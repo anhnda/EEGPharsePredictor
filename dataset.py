@@ -8,7 +8,7 @@ import math
 
 
 class EGGDataset(Dataset):
-    def __init__(self, dump_path=params.DUMP_FILE):
+    def __init__(self, dump_path=params.DUMP_FILE, tile_seq=False, cls_pad=True):
         """
         Arguments:
             csv_file (string): Path to the csv file with annotations.
@@ -23,6 +23,8 @@ class EGGDataset(Dataset):
         self.lb_dict = lb_dict
         self.num_class = len(lb_dict)
         self.cls = torch.zeros((params.D_MODEL,1))
+        self.tile_seq = tile_seq
+        self.cls_pad = cls_pad
 
     def __len__(self):
         return len(self.value_seqs)
@@ -36,7 +38,10 @@ class EGGDataset(Dataset):
         label_id = self.label_seqs[idx]
         label_ar = torch.zeros(self.num_class)
         label_ar[label_id] = 1
-        value_seq = torch.tile(torch.from_numpy(np.asarray(value_seq)) / self.mx, (params.D_MODEL, 1))
-        # print("VShape: ",value_seq.shape)
-        value_seq = torch.hstack([self.cls, value_seq]).transpose(0,1)
+        value_seq = torch.from_numpy(np.asarray(value_seq) / self.mx)
+        if self.tile_seq:
+            value_seq = torch.tile(torch.from_numpy(np.asarray(value_seq)) / self.mx, (params.D_MODEL, 1))
+            if self.cls_pad:
+                value_seq = torch.hstack([self.cls, value_seq]).transpose(0,1)
+
         return value_seq, label_ar

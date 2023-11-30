@@ -10,7 +10,6 @@ class PositionalEncoding(nn.Module):
     def __init__(self, d_model: int, dropout: float = 0.1, max_len: int = 5000):
         super().__init__()
         self.dropout = nn.Dropout(p=dropout)
-
         position = torch.arange(max_len).unsqueeze(1)
         div_term = torch.exp(torch.arange(0, d_model, 2) * (-math.log(10000.0) / d_model))
         pe = torch.zeros(max_len, 1, d_model)
@@ -34,6 +33,7 @@ class EGGPhrasePredictor(nn.Module):
     def __init__(self, n_class, dmodel=params.D_MODEL, nhead=8):
         super().__init__()
         self.dmodel = dmodel
+        self.type = "Transformer"
         self.nhead = nhead
         self.pe = PositionalEncoding(dmodel)
         encoder_layer = nn.TransformerEncoderLayer(d_model=dmodel, nhead=8)
@@ -41,7 +41,7 @@ class EGGPhrasePredictor(nn.Module):
         self.ff1 = torch.nn.Linear(dmodel, dmodel * 2)
         self.ff2 = torch.nn.Linear(dmodel * 2, n_class)
         self.act = torch.nn.ReLU()
-        self.sm = torch.nn.Softmax(dim=-1)
+        # self.sm = torch.nn.Softmax(dim=-1)
 
     def forward2(self, x):
         x = self.pe(x)
@@ -61,6 +61,7 @@ class EGGPhrasePredictor(nn.Module):
         x = x[0, :, :]
         # print("FW: ", x.shape)
 
-        pd = self.sm(self.ff2(self.act(self.ff1(x))))
+        pd = self.ff2(self.act(self.ff1(x)))
+        # pd = self.sm(pd)
         # print("PD: ", pd.shape)
         return pd
