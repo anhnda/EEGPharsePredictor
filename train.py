@@ -4,10 +4,12 @@ from transformer_model import EGGPhrasePredictor
 from cnn_model import CNNModel
 from torch.utils.data import DataLoader
 from torch.utils.data import random_split
+from sklearn.metrics import roc_auc_score, average_precision_score
 import params
 import torch
 from tqdm import tqdm
 from dev import get_device
+import numpy as np
 
 device = get_device()
 model_type = "CNN"
@@ -17,25 +19,28 @@ if model_type == "CNN":
 else:
     tile_seq = True
 
+
 def get_model(n_class):
     if model_type == "CNN":
         model = CNNModel(n_class=n_class).to(device)
     else:
         model = EGGPhrasePredictor(n_class=n_class, dmodel=params.D_MODEL).to(device)
     return model
-def train():
 
+
+def train():
     dataset = EGGDataset(tile_seq=tile_seq)
     n_class = dataset.get_num_class()
     model = get_model(n_class)
     generator1 = torch.Generator().manual_seed(params.RD_SEED)
     train_dt, test_dt = random_split(dataset, [0.8, 0.2], generator=generator1)
-    train_dataloader = DataLoader(train_dt, batch_size=params.BATCH_SIZE, num_workers=1,shuffle=True)
-    test_dataloader = DataLoader(test_dt, batch_size=params.BATCH_SIZE,shuffle=False)
+    train_dataloader = DataLoader(train_dt, batch_size=params.BATCH_SIZE, num_workers=1, shuffle=True)
+    test_dataloader = DataLoader(test_dt, batch_size=params.BATCH_SIZE, shuffle=False)
     loss_function = torch.nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.parameters())
     min_test_loss = 1e6
     min_id = -1
+    sm = torch.nn.Softmax(dim=-1)
     for epoch_id in range(params.N_EPOCH):
         model.train()
         for it, data in enumerate(tqdm(train_dataloader)):
@@ -69,13 +74,22 @@ def train():
             true_test.append(lb)
             predicted_test.append(prediction)
 
-        true_test = torch.concat(true_test, dim=0).cpu()
-        predicted_test = torch.concat(predicted_test, dim=0).cpu()
+        true_test = torch.concat(true_test, dim=0).detach().cpu()[:,:-1]
+        predicted_test = torch.concat(predicted_test, dim=0).detach().cpu()[:,:-1]
+
+
         test_loss = loss_function(predicted_test, true_test)
+        print(torch.sum(true_test,dim=0))
+        print(sm(predicted_test[:2,:]), true_test[:2,:])
+        ss = sm(predicted_test)
+
         if min_test_loss > test_loss:
             min_test_loss = test_loss
             min_id = epoch_id
-        print("Error Test: ", test_loss, min_test_loss, epoch_id, min_id)
+            np.savetxt("out/predicted.txt", ss, fmt="%.4f")
+            np.savetxt("out/true.txt", true_test, fmt="%d")
+        print("Error Test: ", test_loss, min_test_loss, epoch_id, min_id, roc_auc_score(true_test, predicted_test), average_precision_score(true_test, predicted_test))
+
 
 if __name__ == "__main__":
     train()

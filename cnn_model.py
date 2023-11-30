@@ -36,7 +36,7 @@ class CNNModel(nn.Module):
                                     nn.ReLU(),
                                     nn.MaxPool1d(kernel_size=3, stride=2)
                                     )
-        self.fc1 = nn.Sequential(nn.Dropout(0.05), nn.Linear(768, 320), nn.ReLU())
+        self.fc1 = nn.Sequential(nn.Dropout(0.1), nn.Linear(2304, 320), nn.ReLU())
         self.fc2 = nn.Sequential(nn.Linear(320, n_class))
 
     def forward(self, x):

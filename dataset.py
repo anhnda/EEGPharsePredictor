@@ -8,7 +8,7 @@ import math
 
 
 class EGGDataset(Dataset):
-    def __init__(self, dump_path=params.DUMP_FILE, tile_seq=False, cls_pad=True):
+    def __init__(self, dump_path=params.DUMP_FILE, tile_seq=False, cls_pad=True, two_side=True):
         """
         Arguments:
             csv_file (string): Path to the csv file with annotations.
@@ -25,6 +25,7 @@ class EGGDataset(Dataset):
         self.cls = torch.zeros((params.D_MODEL,1))
         self.tile_seq = tile_seq
         self.cls_pad = cls_pad
+        self.two_side = True
 
     def __len__(self):
         return len(self.value_seqs)
@@ -32,16 +33,28 @@ class EGGDataset(Dataset):
     def get_num_class(self):
         return self.num_class
 
+    def __getseq_idx(self, idx):
+        if idx <0 or idx >= params.MAX_SEQ_SIZE:
+            value_seq = np.zeros(params.MAX_SEQ_SIZE)
+        else:
+            value_seq = np.asarray(self.value_seqs[idx])/ self.mx
+        value_seq = torch.from_numpy(value_seq)
+        return value_seq
     def __getitem__(self, idx):
-        value_seq = self.value_seqs[idx]
+        value_seq = self.__getseq_idx(idx)
         assert len(value_seq) == params.MAX_SEQ_SIZE
         label_id = self.label_seqs[idx]
         label_ar = torch.zeros(self.num_class)
         label_ar[label_id] = 1
-        value_seq = torch.from_numpy(np.asarray(value_seq) / self.mx)
         if self.tile_seq:
             value_seq = torch.tile(torch.from_numpy(np.asarray(value_seq)) / self.mx, (params.D_MODEL, 1))
             if self.cls_pad:
                 value_seq = torch.hstack([self.cls, value_seq]).transpose(0,1)
+        else:
+            if self.two_side:
+                value_seq_left = self.__getseq_idx(idx-1)
+                value_seq_right= self.__getseq_idx(idx+1)
+                value_seq = torch.concat((value_seq_left, value_seq, value_seq_right))
+
 
         return value_seq, label_ar
