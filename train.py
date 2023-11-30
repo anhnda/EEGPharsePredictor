@@ -9,8 +9,8 @@ import torch
 from dev import get_device
 
 device = get_device()
-# model_type = "CNN"
-model_type = "Transformer"
+model_type = "CNN"
+# model_type = "Transformer"
 if model_type == "CNN":
     tile_seq = False
 else:
