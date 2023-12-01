@@ -30,7 +30,7 @@ def get_model(n_class):
 
 
 def train():
-    dataset = EGGDataset(tile_seq=tile_seq, two_side=False)
+    dataset = EGGDataset(tile_seq=tile_seq, two_side=True)
     n_class = dataset.get_num_class()
     model = get_model(n_class)
     generator1 = torch.Generator().manual_seed(params.RD_SEED)
