@@ -8,7 +8,7 @@ import math
 
 
 class EGGDataset(Dataset):
-    def __init__(self, dump_path=params.DUMP_FILE, tile_seq=False, cls_pad=True, two_side=True):
+    def __init__(self, dump_path=params.DUMP_FILE, tile_seq=False, cls_pad=True, two_side=False):
         """
         Arguments:
             csv_file (string): Path to the csv file with annotations.
@@ -21,11 +21,12 @@ class EGGDataset(Dataset):
         self.mx = mx
         self.label_seqs = label_seqs
         self.lb_dict = lb_dict
+        self.idx_2lb = {v : k for k, v in lb_dict.items()}
         self.num_class = len(lb_dict)
         self.cls = torch.zeros((params.D_MODEL,1))
         self.tile_seq = tile_seq
         self.cls_pad = cls_pad
-        self.two_side = True
+        self.two_side = two_side
 
     def __len__(self):
         return len(self.value_seqs)
@@ -34,7 +35,7 @@ class EGGDataset(Dataset):
         return self.num_class
 
     def __getseq_idx(self, idx):
-        if idx <0 or idx >= params.MAX_SEQ_SIZE:
+        if idx < 0 or idx >= self.__len__():
             value_seq = np.zeros(params.MAX_SEQ_SIZE)
         else:
             value_seq = np.asarray(self.value_seqs[idx])/ self.mx
@@ -55,6 +56,6 @@ class EGGDataset(Dataset):
                 value_seq_left = self.__getseq_idx(idx-1)
                 value_seq_right= self.__getseq_idx(idx+1)
                 value_seq = torch.concat((value_seq_left, value_seq, value_seq_right))
-
+            pass
 
         return value_seq, label_ar
