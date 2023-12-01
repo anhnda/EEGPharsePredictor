@@ -10,12 +10,12 @@ class CNNModel(nn.Module):
 
         self.layer1 = nn.Sequential(nn.Dropout(0.1),
                                     nn.Conv1d(1, n_base * 3, kernel_size=11, stride=4, padding=0),
-                                    nn.BatchNorm1d(n_base * 3),
+                                    # nn.BatchNorm1d(n_base * 3),
                                     nn.ReLU(),
                                     nn.MaxPool1d(kernel_size=3, stride=2))
 
         self.layer2 = nn.Sequential(nn.Conv1d(n_base * 3, n_base * 8, kernel_size=5, stride=1, padding=2),
-                                    nn.BatchNorm1d(n_base * 8),
+                                    # nn.BatchNorm1d(n_base * 8),
                                     nn.ReLU(),
                                     nn.MaxPool1d(kernel_size=3, stride=2))
 
@@ -26,13 +26,13 @@ class CNNModel(nn.Module):
                                     )
 
         self.layer4 = nn.Sequential(nn.Conv1d(n_base * 10, n_base * 8, kernel_size=3, stride=1, padding=2),
-                                    nn.BatchNorm1d(n_base * 8),
+                                    # nn.BatchNorm1d(n_base * 8),
                                     nn.ReLU(),
                                     nn.MaxPool1d(kernel_size=3, stride=2)
                                     )
 
         self.layer5 = nn.Sequential(nn.Conv1d(n_base * 8, n_base * 6, kernel_size=3, stride=1, padding=2),
-                                    nn.BatchNorm1d(n_base * 6),
+                                    # nn.BatchNorm1d(n_base * 6),
                                     nn.ReLU(),
                                     nn.MaxPool1d(kernel_size=3, stride=2)
                                     )
