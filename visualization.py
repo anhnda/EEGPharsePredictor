@@ -1,10 +1,18 @@
 import numpy as np
 from matplotlib import pyplot as plt
 import joblib
+
+import params
+
+
 def plot(value_seq, name):
     fig = plt.figure()
     x = [i for i in range(len(value_seq))]
     plt.plot(x,value_seq)
+    if len(value_seq >= 3 * params.MAX_SEQ_SIZE - 1):
+        plt.plot([params.MAX_SEQ_SIZE, params.MAX_SEQ_SIZE], [-0.2, .2], c='r')
+        plt.plot([2*params.MAX_SEQ_SIZE, 2*params.MAX_SEQ_SIZE], [-0.2, .2], c='r')
+
     plt.title(name)
     plt.tight_layout()
     plt.savefig("figs/%s.png"%name)
