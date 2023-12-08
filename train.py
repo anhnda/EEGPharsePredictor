@@ -14,9 +14,9 @@ import numpy as np
 import joblib
 
 device = get_device("mps")
-model_type = "CNN"
-TWO_SIDE_WINDOWS = True
-# model_type = "Transformer"
+# model_type = "CNN" # "FFT" # "Transformer"
+TWO_SIDE_WINDOWS = False
+model_type = "Transformer"
 if model_type == "Transformer":
     tile_seq = True
 else:
