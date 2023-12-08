@@ -13,9 +13,9 @@ from dev import get_device
 import numpy as np
 import joblib
 
-device = get_device("cpu")
-model_type = "FFT"
-TWO_SIDE_WINDOWS = False
+device = get_device("mps")
+model_type = "CNN"
+TWO_SIDE_WINDOWS = True
 # model_type = "Transformer"
 if model_type == "Transformer":
     tile_seq = True
@@ -100,6 +100,7 @@ def train():
             min_test_loss = test_loss
             min_id = epoch_id
             np.savetxt("out/predicted.txt", ss, fmt="%.4f")
+            torch.save(model.state_dict(), "out/model.pkl")
             if is_first_test:
                 xs = torch.concat(xs, dim=0).detach().cpu().numpy()
                 lbs = torch.concat(lbs, dim=0).detach().cpu().numpy()
