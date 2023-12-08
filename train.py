@@ -13,10 +13,10 @@ from dev import get_device
 import numpy as np
 import joblib
 
-device = get_device("mps")
-# model_type = "CNN" # "FFT" # "Transformer"
-TWO_SIDE_WINDOWS = False
-model_type = "Transformer"
+device = get_device("cpu")
+model_type = "CNN" # "FFT" # "Transformer"
+TWO_SIDE_WINDOWS = True
+# model_type = "Transformer"
 if model_type == "Transformer":
     tile_seq = True
 else:
