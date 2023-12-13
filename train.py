@@ -2,6 +2,8 @@ import params
 from dataset import EGGDataset
 from transformer_model import EGGPhrasePredictor
 from cnn_model import CNNModel
+from cnn_model_2d import CNNModel2
+
 from fft_model import FFTModel
 from torch.utils.data import DataLoader
 from torch.utils.data import random_split
@@ -13,9 +15,10 @@ from dev import get_device
 import numpy as np
 import joblib
 
-device = get_device("cpu")
+device = get_device("mps")
 model_type = "CNN" # "FFT" # "Transformer"
 TWO_SIDE_WINDOWS = True
+params.THREE_SIGNAL_TYPES = False
 # model_type = "Transformer"
 if model_type == "Transformer":
     tile_seq = True
@@ -26,6 +29,8 @@ else:
 def get_model(n_class):
     if model_type == "CNN":
         model = CNNModel(n_class=n_class, ).to(device)
+    elif model_type == "CNN2":
+        model = CNNModel2(n_class=n_class, ).to(device)
     elif model_type == "FFT":
         model = FFTModel(n_class=n_class).to(device)
     else:
@@ -52,6 +57,8 @@ def train():
         for it, data in enumerate(tqdm(train_dataloader)):
             optimizer.zero_grad()
             x, lb = data
+            # print(x.shape, lb)
+            # exit(-1)
             if model.type == "Transformer":
                 x = x.transpose(1, 0)
             else:
