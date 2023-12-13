@@ -32,6 +32,7 @@ class CNNModel(nn.Module):
         self.n_class = n_class
         self.type = "CNN"
 
+
         self.layer1 = nn.Sequential(nn.Dropout(0.1),
                                     nn.Conv1d(1, n_base * 3, kernel_size=11, stride=4, padding=0),
                                     # nn.BatchNorm1d(n_base * 3),
@@ -63,8 +64,9 @@ class CNNModel(nn.Module):
                                     BiMaxPooling(kernel_size=3, stride=2)
                                     )
         # self.fc1 = nn.Sequential(nn.Dropout(0.1), nn.Linear(2304, 320), nn.ReLU())
-        # self.fc1 = nn.Sequential(nn.Dropout(0.1), nn.Linear(4608, 320), nn.ReLU())
-        self.fc1 = nn.Sequential(nn.Dropout(0.1), nn.Linear(1536, 320), nn.ReLU())
+
+
+        self.fc1 = nn.Sequential(nn.Dropout(0.1), nn.Linear(4608, 320), nn.ReLU())
 
         # self.fc1 = nn.Sequential(nn.Dropout(0.1), nn.Linear(768, 320), nn.ReLU())
 
@@ -82,7 +84,6 @@ class CNNModel(nn.Module):
         out = self.layer5(out)
         out = out.reshape(out.size(0), -1)
         # print(out.shape)
-        # exit(-1)
         out = self.fc1(out)
         out = self.fc2(out)
         return out

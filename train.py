@@ -16,7 +16,7 @@ import numpy as np
 import joblib
 
 device = get_device("mps")
-model_type = "CNN" # "FFT" # "Transformer"
+model_type = "FFT" # "FFT" # "Transformer"
 TWO_SIDE_WINDOWS = True
 params.THREE_SIGNAL_TYPES = False
 # model_type = "Transformer"
