@@ -72,7 +72,7 @@ class CNNModel(nn.Module):
 
     def forward(self, x):
         # print("X", x.shape)
-
+        # print(x.dtype)
         out = self.layer1(x)
         # print(out.shape)
         # exit(-1)

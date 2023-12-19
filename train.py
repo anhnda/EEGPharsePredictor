@@ -16,8 +16,8 @@ import numpy as np
 import joblib
 
 device = get_device("mps")
-model_type = "FFT" # "FFT" # "Transformer"
-TWO_SIDE_WINDOWS = True
+model_type = "CNN"  # "FFT" # "Transformer"
+TWO_SIDE_WINDOWS = False
 params.THREE_SIGNAL_TYPES = False
 # model_type = "Transformer"
 if model_type == "Transformer":
@@ -94,13 +94,12 @@ def train():
             # print("P S: ", prediction.shape)
             predicted_test.append(prediction)
 
-        true_test = torch.concat(true_test, dim=0).detach().cpu()[:,:-1]
-        predicted_test = torch.concat(predicted_test, dim=0).detach().cpu()[:,:-1]
-
+        true_test = torch.concat(true_test, dim=0).detach().cpu()[:, :-1]
+        predicted_test = torch.concat(predicted_test, dim=0).detach().cpu()[:, :-1]
 
         test_loss = loss_function(predicted_test, true_test)
-        print(torch.sum(true_test,dim=0))
-        print(sm(predicted_test[:2,:]), true_test[:2,:])
+        print(torch.sum(true_test, dim=0))
+        print(sm(predicted_test[:2, :]), true_test[:2, :])
         ss = sm(predicted_test)
 
         if min_test_loss > test_loss:
@@ -114,7 +113,8 @@ def train():
                 np.savetxt("out/true.txt", true_test, fmt="%d")
                 joblib.dump([xs, lbs, dataset.idx_2lb], "out/test_data.pkl")
                 is_first_test = False
-        print("Error Test: ", test_loss, min_test_loss, epoch_id, min_id, roc_auc_score(true_test, predicted_test), average_precision_score(true_test, predicted_test))
+        print("Error Test: ", test_loss, min_test_loss, epoch_id, min_id, roc_auc_score(true_test, predicted_test),
+              average_precision_score(true_test, predicted_test))
 
 
 if __name__ == "__main__":
