@@ -44,7 +44,7 @@ def xshap():
     lbws = []
     shap_values = []
     ic = 0
-    MX = len(test_dataloader)
+    MX = 10 # len(test_dataloader)
     for _, data in tqdm(enumerate(test_dataloader)):
         ic += 1
         if ic == MX - 1:
