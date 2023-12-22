@@ -1,3 +1,5 @@
+import math
+
 import params
 from dataset import EGGDataset
 from torch.utils.data import DataLoader
@@ -29,7 +31,7 @@ def train():
         model.train()
         for it, data in enumerate(tqdm(train_dataloader)):
             optimizer.zero_grad()
-            x, lb = data
+            x, lb, _ = data
             # print(x.shape, lb)
             # exit(-1)
             if model.type == "Transformer":
@@ -49,13 +51,15 @@ def train():
         predicted_test = []
         xs = []
         lbs = []
+        lbws = []
         print("Train last loss: ", loss)
         model.eval()
         for _, data in enumerate(test_dataloader):
-            x, lb = data
+            x, lb, lws = data
             if is_first_test:
                 xs.append(x)
                 lbs.append(lb)
+                lbws.append(lws)
             if model.type == "Transformer":
                 x = x.transpose(1, 0)
             else:
@@ -69,25 +73,30 @@ def train():
 
         true_test = torch.concat(true_test, dim=0).detach().cpu()[:, :-1]
         predicted_test = torch.concat(predicted_test, dim=0).detach().cpu()[:, :-1]
-
+        auc, aupr = roc_auc_score(true_test, predicted_test), average_precision_score(true_test, predicted_test)
+        f1x = 2* auc * aupr / (auc + aupr + 1e-10)
         test_loss = loss_function(predicted_test, true_test)
         print(torch.sum(true_test, dim=0))
         print(sm(predicted_test[:2, :]), true_test[:2, :])
         ss = sm(predicted_test)
-
-        if min_test_loss > test_loss:
-            min_test_loss = test_loss
+        test_loss2 = test_loss
+        if params.CRITERIA == "F1X":
+            test_loss2 = - f1x
+        if min_test_loss > test_loss2:
+            min_test_loss = test_loss2
             min_id = epoch_id
             np.savetxt("out/predicted.txt", ss, fmt="%.4f")
             torch.save(model.state_dict(), "out/model.pkl")
+
+            print("Find new Best: ", test_loss, math.fabs(test_loss2), math.fabs(min_test_loss))
             if is_first_test:
                 xs = torch.concat(xs, dim=0).detach().cpu().numpy()
                 lbs = torch.concat(lbs, dim=0).detach().cpu().numpy()
+                lbws = torch.concat(lbws, dim=0).detach().cpu().numpy()
                 np.savetxt("out/true.txt", true_test, fmt="%d")
-                joblib.dump([xs, lbs, dataset.idx_2lb], "out/test_data.pkl")
+                joblib.dump([xs, lbs, lbws, dataset.idx_2lb], "out/test_data.pkl")
                 is_first_test = False
-        print("Error Test: ", test_loss, min_test_loss, epoch_id, min_id, roc_auc_score(true_test, predicted_test),
-              average_precision_score(true_test, predicted_test))
+        print("Error Test: ", params.CRITERIA, test_loss, math.fabs(test_loss2), math.fabs(min_test_loss), epoch_id, min_id, auc, aupr)
 
 
 if __name__ == "__main__":

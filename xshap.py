@@ -29,7 +29,7 @@ def xshap():
     train_dt, test_dt = random_split(dataset, [0.8, 0.2], generator=generator1)
     train_dataloader = DataLoader(train_dt, batch_size=params.BATCH_SIZE * 2, num_workers=1, shuffle=True,
                                   drop_last=True)
-    samples, lb = next(iter(train_dataloader))
+    samples, lb, _ = next(iter(train_dataloader))
     if model.type == "Transformer":
         samples = samples.transpose(1, 0)
     else:
@@ -41,13 +41,15 @@ def xshap():
     sm = torch.nn.Softmax(dim=-1)
     xs = []
     lbs = []
+    lbws = []
     shap_values = []
     ic = 0
+    MX = len(test_dataloader)
     for _, data in tqdm(enumerate(test_dataloader)):
         ic += 1
-        if ic == 40:
+        if ic == MX - 1:
             break
-        x, lb = data
+        x, lb, lbw = data
 
         if model.type == "Transformer":
             x = x.transpose(1, 0)
@@ -58,12 +60,14 @@ def xshap():
         shap_v = explainer.shap_values(x, check_additivity=False)
         xs.append(x)
         lbs.append(lb)
+        lbws.append(lbw)
         shap_values.append(shap_v)
         # print(prediction.shape, prediction)
         # exit(-1)
     xs = torch.concat(xs, dim=0).detach().cpu().numpy()
     lbs = torch.concat(lbs, dim=0).detach().cpu().numpy()
-    joblib.dump([xs, lbs, shap_values,dataset.idx_2lb], "out/xmodel.pkl")
+    lbws = torch.concat(lbws, dim=0).detach().cpu().numpy()
+    joblib.dump([xs, lbs,lbws, shap_values,dataset.idx_2lb], "out/xmodel.pkl")
 
 
 if __name__ == "__main__":

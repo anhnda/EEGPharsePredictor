@@ -35,7 +35,10 @@ class EGGDataset(Dataset):
 
     def get_num_class(self):
         return self.num_class
-
+    def __getlb_idx(self, idx):
+        if idx < 0 or idx >= self.__len__():
+            return -1
+        return self.label_seqs[idx]
     def __getseq_idx(self, idx):
         # print(idx)
         if idx < 0 or idx >= self.__len__():
@@ -62,6 +65,7 @@ class EGGDataset(Dataset):
         label_id = self.label_seqs[idx]
         label_ar = torch.zeros(self.num_class)
         label_ar[label_id] = 1
+        label_windows = [label_id]
         # print("Val Seq: ", value_seq.shape)
         if self.tile_seq:
             value_seq = torch.tile(torch.from_numpy(np.asarray(value_seq)) / self.mx, (params.D_MODEL, 1))
@@ -72,9 +76,11 @@ class EGGDataset(Dataset):
                 value_seq_left = self.__getseq_idx(idx - 1)
                 value_seq_right = self.__getseq_idx(idx + 1)
                 value_seq = torch.concat((value_seq_left, value_seq, value_seq_right),dim=-1)
+                label_windows = [self.__getlb_idx(idx-1), label_id, self.__getlb_idx(idx+1)]
             elif self.side_flag == params.LEFT:
 
                 value_seq_left = self.__getseq_idx(idx - 1)
                 value_seq = torch.concat((value_seq_left, value_seq), dim=-1)
+                label_windows = [label_id, self.__getlb_idx(idx+1)]
 
-        return value_seq, label_ar
+        return value_seq, label_ar, torch.asarray(label_windows)
