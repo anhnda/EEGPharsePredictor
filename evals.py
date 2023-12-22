@@ -42,14 +42,14 @@ def combine_type(y_true, y_score):
     return y_true, y_score
 
 
-def run():
+def run(combine=True):
     y_true = np.loadtxt("out/true.txt", dtype=int)
     y_score = np.loadtxt("out/predicted.txt")
     # print(y_true, y_score)
-    eval_multiclasses(y_true, y_score, combine=False)
+    eval_multiclasses(y_true, y_score, combine=combine)
 
 
 if __name__ == "__main__":
-    run()
+    run(combine=True)
     # ar = np.random.random((2,4))
     # print(ar[:, 2:4])
