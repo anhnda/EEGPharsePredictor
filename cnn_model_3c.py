@@ -2,6 +2,8 @@ import torch
 from torch import nn
 from torch.nn import MaxPool1d
 
+import params
+
 
 class MNAPooling(nn.Module):
     def __init__(self, kernel_size=3, stride=2):
@@ -26,64 +28,82 @@ class BiMaxPooling(nn.Module):
         return torch.concat([mx1, mx2], dim=1)
 
 
-class CNNModel(nn.Module):
-    def __init__(self, n_class, n_base=16, n_conv=8):
+def get_dim(dim, flag):
+    return dim * flag
+
+
+class CNNModel3C(nn.Module):
+    def __init__(self, n_class, n_base=16, flag=1, n_conv=8):
         super().__init__()
         self.n_class = n_class
-        self.type = "CNN"
+        self.type = "CNN3C"
+        self.flag = flag
+        self.chain1_layers = nn.ModuleList()
+        self.chain2_layers = nn.ModuleList()
+        self.chain3_layers = nn.ModuleList()
+        self.chains = [self.chain1_layers, self.chain2_layers, self.chain3_layers]
+        base_dim = 1536
 
+        for i in range(3):
+            layer1 = nn.Sequential(nn.Dropout(0.1),
+                                   nn.Conv1d(1, n_base * 3, kernel_size=11, stride=4, padding=0),
+                                   # nn.BatchNorm1d(n_base * 3),
+                                   nn.ReLU(),
+                                   # nn.MaxPool1d(kernel_size=3, stride=2)
+                                   BiMaxPooling(kernel_size=3, stride=2)
+                                   )
 
-        self.layer1 = nn.Sequential(nn.Dropout(0.1),
-                                    nn.Conv1d(1, n_base * 3, kernel_size=11, stride=4, padding=0),
-                                    # nn.BatchNorm1d(n_base * 3),
-                                    nn.ReLU(),
-                                    # nn.MaxPool1d(kernel_size=3, stride=2)
-                                    BiMaxPooling(kernel_size=3, stride=2)
-                                    )
+            layer2 = nn.Sequential(nn.Conv1d(n_base * 3 * 2, n_base * 8, kernel_size=5, stride=1, padding=2),
+                                   # nn.BatchNorm1d(n_base * 8),
+                                   nn.ReLU(),
+                                   BiMaxPooling(kernel_size=3, stride=2))
 
-        self.layer2 = nn.Sequential(nn.Conv1d(n_base * 3 * 2, n_base * 8, kernel_size=5, stride=1, padding=2),
-                                    # nn.BatchNorm1d(n_base * 8),
-                                    nn.ReLU(),
-                                    BiMaxPooling(kernel_size=3, stride=2))
+            layer3 = nn.Sequential(nn.Conv1d(n_base * 8 * 2, n_base * 20, kernel_size=3, stride=1, padding=2),
+                                   # nn.BatchNorm1d(n_base * 10),
+                                   nn.ReLU(),
+                                   BiMaxPooling(kernel_size=3, stride=2)
+                                   )
 
-        self.layer3 = nn.Sequential(nn.Conv1d(n_base * 8 * 2, n_base * 20, kernel_size=3, stride=1, padding=2),
-                                    # nn.BatchNorm1d(n_base * 10),
-                                    nn.ReLU(),
-                                    BiMaxPooling(kernel_size=3, stride=2)
-                                    )
+            layer4 = nn.Sequential(nn.Conv1d(n_base * 20 * 2, n_base * 8, kernel_size=3, stride=1, padding=2),
+                                   # nn.BatchNorm1d(n_base * 8),
+                                   nn.ReLU(),
+                                   BiMaxPooling(kernel_size=3, stride=2)
+                                   )
 
-        self.layer4 = nn.Sequential(nn.Conv1d(n_base * 20 * 2, n_base * 8, kernel_size=3, stride=1, padding=2),
-                                    # nn.BatchNorm1d(n_base * 8),
-                                    nn.ReLU(),
-                                    BiMaxPooling(kernel_size=3, stride=2)
-                                    )
+            layer5 = nn.Sequential(nn.Conv1d(n_base * 8 * 2, n_base * 6, kernel_size=3, stride=1, padding=2),
+                                   # nn.BatchNorm1d(n_base * 6),
+                                   nn.ReLU(),
+                                   BiMaxPooling(kernel_size=3, stride=2)
+                                   )
+            self.chains[i].append(layer1)
+            self.chains[i].append(layer2)
+            self.chains[i].append(layer3)
+            self.chains[i].append(layer4)
+            self.chains[i].append(layer5)
 
-        self.layer5 = nn.Sequential(nn.Conv1d(n_base * 8 * 2, n_base * 6, kernel_size=3, stride=1, padding=2),
-                                    # nn.BatchNorm1d(n_base * 6),
-                                    nn.ReLU(),
-                                    BiMaxPooling(kernel_size=3, stride=2)
-                                    )
-        # self.fc1 = nn.Sequential(nn.Dropout(0.1), nn.Linear(2304, 320), nn.ReLU())
+            # self.fc1 = nn.Sequential(nn.Dropout(0.1), nn.Linear(2304, 320), nn.ReLU())
+            fc1 = nn.Sequential(nn.Dropout(0.1), nn.Linear(get_dim(base_dim, self.flag), 320), nn.ReLU())
+            self.chains[i].append(fc1)
+            # self.fc1 = nn.Sequential(nn.Dropout(0.1), nn.Linear(1536, 320), nn.ReLU())
 
+            # self.fc1 = nn.Sequential(nn.Dropout(0.1), nn.Linear(768, 320), nn.ReLU())
 
-        self.fc1 = nn.Sequential(nn.Dropout(0.1), nn.Linear(4608, 320), nn.ReLU())
-
-        # self.fc1 = nn.Sequential(nn.Dropout(0.1), nn.Linear(768, 320), nn.ReLU())
-
-        self.fc2 = nn.Sequential(nn.Linear(320, n_class))
+        self.fc2 = nn.Sequential(nn.Linear(320 * 3, n_class))
 
     def forward(self, x):
         # print("X", x.shape)
-
-        out = self.layer1(x)
-        # print(out.shape)
-        # exit(-1)
-        out = self.layer2(out)
-        out = self.layer3(out)
-        out = self.layer4(out)
-        out = self.layer5(out)
-        out = out.reshape(out.size(0), -1)
-        # print(out.shape)
-        out = self.fc1(out)
+        xis = []
+        for i in range(3):
+            xi = x[:, :, i, :]
+            xi = torch.squeeze(xi, 2)
+            for j, jlayer in enumerate(self.chains[i]):
+                if j < len(self.chains[i]) - 1:
+                    xi = jlayer(xi)
+                else:
+                    xi = xi.reshape(xi.size(0), -1)
+                    xi = jlayer(xi)
+                    xis.append(xi)
+        out = torch.concat(xis, dim=-1)
         out = self.fc2(out)
+
         return out

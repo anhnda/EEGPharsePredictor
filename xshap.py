@@ -8,6 +8,8 @@ import torch
 from tqdm import tqdm
 import numpy as np
 import joblib
+params.DEVICE = "cpu"
+
 from get_model import get_model, TILE_SEQ, SIDE_FLAG, device
 import shap
 from shap import DeepExplainer

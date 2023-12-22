@@ -2,8 +2,8 @@ import params
 from dataset import EGGDataset
 from transformer_model import EGGPhrasePredictor
 from cnn_model import CNNModel
-from cnn_model_2d import CNNModel2
-
+# from cnn_model_2d import CNNModel2
+from cnn_model_3c import CNNModel3C
 from fft_model import FFTModel
 from torch.utils.data import DataLoader
 from torch.utils.data import random_split
@@ -17,8 +17,7 @@ import joblib
 
 device = get_device(params.DEVICE)
 model_type = params.MODE_TYPE
-SIDE_FLAG = params.LEFT
-params.THREE_SIGNAL_TYPES = False
+SIDE_FLAG = params.SIDE_FLAG
 
 # model_type = "Transformer"
 TILE_SEQ = False
@@ -31,8 +30,8 @@ if model_type == "Transformer":
 def get_model(n_class):
     if model_type == "CNN":
         model = CNNModel(n_class=n_class, flag=SIDE_FLAG).to(device)
-    elif model_type == "CNN2":
-        model = CNNModel2(n_class=n_class).to(device)
+    elif model_type == "CNN3C":
+        model = CNNModel3C(n_class=n_class, flag=SIDE_FLAG).to(device)
     elif model_type == "FFT":
         model = FFTModel(n_class=n_class).to(device)
     else:

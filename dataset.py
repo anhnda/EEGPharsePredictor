@@ -39,9 +39,12 @@ class EGGDataset(Dataset):
     def __getseq_idx(self, idx):
         # print(idx)
         if idx < 0 or idx >= self.__len__():
-            value_seq = np.zeros(params.MAX_SEQ_SIZE)
+            if params.THREE_CHAINS:
+                value_seq = np.zeros((3, params.MAX_SEQ_SIZE))
+            else:
+                value_seq = np.zeros(params.MAX_SEQ_SIZE)
         else:
-            if params.THREE_SIGNAL_TYPES:
+            if params.THREE_CHAINS:
                 value_seq = np.asarray(
                     [self.value_seqs[0][idx], self.value_seqs[1][idx], self.value_seqs[2][idx]]) / self.mx
             else:
@@ -52,13 +55,14 @@ class EGGDataset(Dataset):
 
     def __getitem__(self, idx):
         value_seq = self.__getseq_idx(idx)
-        if params.THREE_SIGNAL_TYPES:
+        if params.THREE_CHAINS:
             assert len(value_seq[0]) == params.MAX_SEQ_SIZE
         else:
             assert len(value_seq) == params.MAX_SEQ_SIZE
         label_id = self.label_seqs[idx]
         label_ar = torch.zeros(self.num_class)
         label_ar[label_id] = 1
+        # print("Val Seq: ", value_seq.shape)
         if self.tile_seq:
             value_seq = torch.tile(torch.from_numpy(np.asarray(value_seq)) / self.mx, (params.D_MODEL, 1))
             if self.cls_pad:
@@ -67,9 +71,10 @@ class EGGDataset(Dataset):
             if self.side_flag == params.TWO_SIDE:
                 value_seq_left = self.__getseq_idx(idx - 1)
                 value_seq_right = self.__getseq_idx(idx + 1)
-                value_seq = torch.concat((value_seq_left, value_seq, value_seq_right))
+                value_seq = torch.concat((value_seq_left, value_seq, value_seq_right),dim=-1)
             elif self.side_flag == params.LEFT:
+
                 value_seq_left = self.__getseq_idx(idx - 1)
-                value_seq = torch.concat((value_seq_left, value_seq))
+                value_seq = torch.concat((value_seq_left, value_seq), dim=-1)
 
         return value_seq, label_ar

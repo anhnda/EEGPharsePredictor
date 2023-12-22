@@ -10,6 +10,7 @@ import numpy as np
 import joblib
 from get_model import get_model, TILE_SEQ, SIDE_FLAG, device
 
+
 def train():
     dataset = EGGDataset(tile_seq=TILE_SEQ, side_flag=SIDE_FLAG)
     n_class = dataset.get_num_class()
