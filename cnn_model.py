@@ -2,6 +2,8 @@ import torch
 from torch import nn
 from torch.nn import MaxPool1d
 
+import params
+
 
 class MNAPooling(nn.Module):
     def __init__(self, kernel_size=3, stride=2):
@@ -26,11 +28,16 @@ class BiMaxPooling(nn.Module):
         return torch.concat([mx1, mx2], dim=1)
 
 
+def get_dim(dim, flag):
+    return dim * flag
+
+
 class CNNModel(nn.Module):
-    def __init__(self, n_class, n_base=16, n_conv=8):
+    def __init__(self, n_class, n_base=16,  flag=1, n_conv=8):
         super().__init__()
         self.n_class = n_class
         self.type = "CNN"
+        self.flag = flag
 
         self.layer1 = nn.Sequential(nn.Dropout(0.1),
                                     nn.Conv1d(1, n_base * 3, kernel_size=11, stride=4, padding=0),
@@ -63,8 +70,9 @@ class CNNModel(nn.Module):
                                     BiMaxPooling(kernel_size=3, stride=2)
                                     )
         # self.fc1 = nn.Sequential(nn.Dropout(0.1), nn.Linear(2304, 320), nn.ReLU())
-        # self.fc1 = nn.Sequential(nn.Dropout(0.1), nn.Linear(4608, 320), nn.ReLU())
-        self.fc1 = nn.Sequential(nn.Dropout(0.1), nn.Linear(1536, 320), nn.ReLU())
+        base_dim = 1536
+        self.fc1 = nn.Sequential(nn.Dropout(0.1), nn.Linear(get_dim(base_dim, self.flag), 320), nn.ReLU())
+        # self.fc1 = nn.Sequential(nn.Dropout(0.1), nn.Linear(1536, 320), nn.ReLU())
 
         # self.fc1 = nn.Sequential(nn.Dropout(0.1), nn.Linear(768, 320), nn.ReLU())
 

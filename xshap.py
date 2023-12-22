@@ -1,44 +1,16 @@
-import shap
-
 import params
 from dataset import EGGDataset
-from transformer_model import EGGPhrasePredictor
-from cnn_model import CNNModel
-from fft_model import FFTModel
-from cnn_model_2d import CNNModel2
-
 from torch.utils.data import DataLoader
 from torch.utils.data import random_split
 from sklearn.metrics import roc_auc_score, average_precision_score
 import params
 import torch
 from tqdm import tqdm
-from dev import get_device
 import numpy as np
 import joblib
+from get_model import get_model, TILE_SEQ, SIDE_FLAG, device
+import shap
 from shap import DeepExplainer
-
-device = get_device("cpu")
-model_type = "CNN"  # "FFT" # "Transformer"
-TWO_SIDE_WINDOWS = False
-params.THREE_SIGNAL_TYPES = False
-# model_type = "Transformer"
-if model_type == "Transformer":
-    tile_seq = True
-else:
-    tile_seq = False
-
-
-def get_model(n_class):
-    if model_type == "CNN":
-        model = CNNModel(n_class=n_class, ).to(device)
-    elif model_type == "CNN2":
-        model = CNNModel2(n_class=n_class, ).to(device)
-    elif model_type == "FFT":
-        model = FFTModel(n_class=n_class).to(device)
-    else:
-        model = EGGPhrasePredictor(n_class=n_class, dmodel=params.D_MODEL).to(device)
-    return model
 
 
 
@@ -47,9 +19,9 @@ def load_model(model, path):
 
 
 def xshap():
-    dataset = EGGDataset(tile_seq=tile_seq, two_side=TWO_SIDE_WINDOWS)
+    dataset = EGGDataset(tile_seq=TILE_SEQ, side_flag=SIDE_FLAG)
     n_class = dataset.get_num_class()
-    model = get_model(n_class)
+    model = get_model(n_class).to(device)
     load_model(model, "out/model.pkl")
     generator1 = torch.Generator().manual_seed(params.RD_SEED)
     train_dt, test_dt = random_split(dataset, [0.8, 0.2], generator=generator1)
