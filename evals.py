@@ -46,7 +46,7 @@ def run():
     y_true = np.loadtxt("out/true.txt", dtype=int)
     y_score = np.loadtxt("out/predicted.txt")
     # print(y_true, y_score)
-    eval_multiclasses(y_true, y_score)
+    eval_multiclasses(y_true, y_score, combine=False)
 
 
 if __name__ == "__main__":
