@@ -44,7 +44,7 @@ def xshap():
     lbws = []
     shap_values = []
     ic = 0
-    MX = 10 # len(test_dataloader)
+    MX = len(test_dataloader)
     for _, data in tqdm(enumerate(test_dataloader)):
         ic += 1
         if ic == MX - 1:
@@ -64,6 +64,12 @@ def xshap():
         shap_values.append(shap_v)
         # print(prediction.shape, prediction)
         # exit(-1)
+        if ic % 100 == 0 and ic > 0:
+            xss = torch.concat(xs, dim=0).detach().cpu().numpy()
+            lbss = torch.concat(lbs, dim=0).detach().cpu().numpy()
+            lbwss = torch.concat(lbws, dim=0).detach().cpu().numpy()
+            joblib.dump([xss, lbss, lbwss, shap_values, dataset.idx_2lb], "out/xmodel.pkl")
+
     xs = torch.concat(xs, dim=0).detach().cpu().numpy()
     lbs = torch.concat(lbs, dim=0).detach().cpu().numpy()
     lbws = torch.concat(lbws, dim=0).detach().cpu().numpy()

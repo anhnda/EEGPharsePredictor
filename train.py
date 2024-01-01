@@ -12,7 +12,8 @@ import numpy as np
 import joblib
 from get_model import get_model, TILE_SEQ, SIDE_FLAG, device
 
-
+CLASS_WEIGHT = None # torch.tensor([2, 1, 0.1,  2, 2, 0.5, 0]).float().to(device)
+CLASS_WEIGHT2 = None #torch.tensor([2, 1, 0.1,  2, 2, 0.5]).float()
 def train():
     dataset = EGGDataset(tile_seq=TILE_SEQ, side_flag=SIDE_FLAG)
     n_class = dataset.get_num_class()
@@ -21,7 +22,9 @@ def train():
     train_dt, test_dt = random_split(dataset, [0.8, 0.2], generator=generator1)
     train_dataloader = DataLoader(train_dt, batch_size=params.BATCH_SIZE, num_workers=1, shuffle=True, drop_last=True)
     test_dataloader = DataLoader(test_dt, batch_size=params.BATCH_SIZE, shuffle=False)
-    loss_function = torch.nn.CrossEntropyLoss()
+    loss_function = torch.nn.CrossEntropyLoss(weight=CLASS_WEIGHT)
+    loss_function2 = torch.nn.CrossEntropyLoss(weight=CLASS_WEIGHT2)
+
     optimizer = torch.optim.Adam(model.parameters())
     min_test_loss = 1e6
     min_id = -1
@@ -75,7 +78,7 @@ def train():
         predicted_test = torch.concat(predicted_test, dim=0).detach().cpu()[:, :-1]
         auc, aupr = roc_auc_score(true_test, predicted_test), average_precision_score(true_test, predicted_test)
         f1x = 2* auc * aupr / (auc + aupr + 1e-10)
-        test_loss = loss_function(predicted_test, true_test)
+        test_loss = loss_function2(predicted_test, true_test)
         print(torch.sum(true_test, dim=0))
         print(sm(predicted_test[:2, :]), true_test[:2, :])
         ss = sm(predicted_test)
@@ -96,7 +99,8 @@ def train():
                 np.savetxt("out/true.txt", true_test, fmt="%d")
                 joblib.dump([xs, lbs, lbws, dataset.idx_2lb], "out/test_data.pkl")
                 is_first_test = False
-        print("Error Test: ", params.CRITERIA, test_loss, math.fabs(test_loss2), math.fabs(min_test_loss), epoch_id, min_id, auc, aupr)
+        print("Error Test: ", params.CRITERIA, test_loss, math.fabs(test_loss2), math.fabs(min_test_loss)
+              , epoch_id, min_id, auc, aupr)
 
 
 if __name__ == "__main__":

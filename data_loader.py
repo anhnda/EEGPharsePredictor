@@ -57,7 +57,8 @@ def load_seq_data(times, labels, inp=params.SEQUENCE_FILE):
     label_seqs = []
     time_v = -1
     is_exit = False
-    mx = -10000
+    mx1, mx2, mx3 = -10000, -10000, -10000
+    mxs = [mx1, mx2, mx3]
     while not is_exit:
         while time_v < times[cid]:
             line = fin.readline()
@@ -80,8 +81,8 @@ def load_seq_data(times, labels, inp=params.SEQUENCE_FILE):
             assert len(value_texts) == 3
             for i, value_text in enumerate(value_texts):
                 v = float(value_text)
-                if abs(v) > mx:
-                    mx = abs(v)
+                if abs(v) > mxs[i]:
+                    mxs[i] = abs(v)
 
                 c_seqs[i].append(v)
                 # print(i, len(c_seqs[i]))
@@ -99,17 +100,17 @@ def load_seq_data(times, labels, inp=params.SEQUENCE_FILE):
                     is_next_seg = True
 
     fin.close()
-    return value_seqs, label_seqs, mx
+    return value_seqs, label_seqs, mxs
 
 
 def load_data(force_reload=False):
     if os.path.exists(params.DUMP_FILE) and force_reload is False:
-        value_seqs, label_seqs, mx, lb_dict = joblib.load(params.DUMP_FILE)
+        value_seqs, label_seqs, mxs, lb_dict = joblib.load(params.DUMP_FILE)
     else:
         labels, times, lb_dict = load_labels(params.LABEL_FILE)
-        value_seqs, label_seqs, mx = load_seq_data(times, labels, params.SEQUENCE_FILE)
-        joblib.dump((value_seqs, label_seqs, mx, lb_dict), params.DUMP_FILE)
-    print(len(label_seqs), len(value_seqs), mx)
+        value_seqs, label_seqs, mxs = load_seq_data(times, labels, params.SEQUENCE_FILE)
+        joblib.dump((value_seqs, label_seqs, mxs, lb_dict), params.DUMP_FILE)
+    print(len(label_seqs), len(value_seqs), mxs)
     for i in range(len(label_seqs)):
         # print(len(value_seqs[0]), type(value_seqs[0]))
 

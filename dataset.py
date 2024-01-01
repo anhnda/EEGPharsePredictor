@@ -19,7 +19,8 @@ class EGGDataset(Dataset):
         value_seqs, label_seqs, mx, lb_dict = joblib.load(dump_path)
         # print(len(value_seqs), len(value_seqs[0]), len(value_seqs[0][7786]), len(value_seqs[1][7786]), len(value_seqs[2][7786]), len(label_seqs))
         self.value_seqs = value_seqs
-        self.mx = mx
+        self.mx = np.asarray(mx)[:, np.newaxis]
+        print(self.mx)
         self.label_seqs = label_seqs
         self.lb_dict = lb_dict
         self.idx_2lb = {v: k for k, v in lb_dict.items()}
