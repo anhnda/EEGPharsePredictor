@@ -21,7 +21,7 @@ def train():
     generator1 = torch.Generator().manual_seed(params.RD_SEED)
     train_dt, test_dt = random_split(dataset, [0.8, 0.2], generator=generator1)
     train_dataloader = DataLoader(train_dt, batch_size=params.BATCH_SIZE, num_workers=1, shuffle=True, drop_last=True)
-    test_dataloader = DataLoader(test_dt, batch_size=params.BATCH_SIZE, shuffle=False)
+    test_dataloader = DataLoader(test_dt, batch_size=params.BATCH_SIZE, num_workers=0, shuffle=False)
     loss_function = torch.nn.CrossEntropyLoss(weight=CLASS_WEIGHT)
     loss_function2 = torch.nn.CrossEntropyLoss(weight=CLASS_WEIGHT2)
 
@@ -57,12 +57,17 @@ def train():
         lbws = []
         print("Train last loss: ", loss)
         model.eval()
-        for _, data in enumerate(test_dataloader):
+        itest = 0
+        for _, data in tqdm(enumerate(test_dataloader)):
             x, lb, lws, _ = data
-            if is_first_test:
-                xs.append(x)
-                lbs.append(lb)
-                lbws.append(lws)
+            itest += 1
+            # print("\r%s", itest, end="")
+
+            if is_first_test and itest <= 2001:
+                # xs.append(x)
+                # lbs.append(lb)
+                # lbws.append(lws)
+                pass
             if model.type == "Transformer":
                 x = x.transpose(1, 0)
             else:
@@ -70,10 +75,11 @@ def train():
             x = x.float().to(device)
             # print("X in", x.shape)
             prediction = model(x)
-            true_test.append(lb)
+            # print(lb.shape, prediction.shape)
+            true_test.append(lb.detach().cpu())
             # print("P S: ", prediction.shape)
-            predicted_test.append(prediction)
-
+            predicted_test.append(prediction.detach().cpu())
+        # exit(-1)
         true_test = torch.concat(true_test, dim=0).detach().cpu()[:, :-1]
         predicted_test = torch.concat(predicted_test, dim=0).detach().cpu()[:, :-1]
         auc, aupr = roc_auc_score(true_test, predicted_test), average_precision_score(true_test, predicted_test)
@@ -88,14 +94,14 @@ def train():
         if min_test_loss > test_loss2:
             min_test_loss = test_loss2
             min_id = epoch_id
-            np.savetxt("out/predicted.txt", ss, fmt="%.4f")
-            torch.save(model.state_dict(), "out/model.pkl")
+            np.savetxt("out/predicted_%s.txt" % params.DID, ss, fmt="%.4f")
+            torch.save(model.state_dict(), "out/model_%s.pkl" % params.DID)
 
             print("Find new Best: ", test_loss, math.fabs(test_loss2), math.fabs(min_test_loss))
             if is_first_test:
-                xs = torch.concat(xs, dim=0).detach().cpu().numpy()
-                lbs = torch.concat(lbs, dim=0).detach().cpu().numpy()
-                lbws = torch.concat(lbws, dim=0).detach().cpu().numpy()
+                # xs = torch.concat(xs, dim=0).detach().cpu().numpy()
+                # lbs = torch.concat(lbs, dim=0).detach().cpu().numpy()
+                # lbws = torch.concat(lbws, dim=0).detach().cpu().numpy()
                 np.savetxt("out/true.txt", true_test, fmt="%d")
                 joblib.dump([xs, lbs, lbws, dataset.idx_2lb], "out/test_data.pkl")
                 is_first_test = False

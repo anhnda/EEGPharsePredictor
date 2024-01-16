@@ -24,7 +24,7 @@ def xshap():
     dataset = EGGDataset(tile_seq=TILE_SEQ, side_flag=SIDE_FLAG)
     n_class = dataset.get_num_class()
     model = get_model(n_class).to(device)
-    load_model(model, "out/model.pkl")
+    load_model(model, "out/model_%s.pkl" % params.DID)
     generator1 = torch.Generator().manual_seed(params.RD_SEED)
     train_dt, test_dt = random_split(dataset, [0.8, 0.2], generator=generator1)
     train_dataloader = DataLoader(train_dt, batch_size=params.BATCH_SIZE * 2, num_workers=1, shuffle=True,
@@ -45,7 +45,7 @@ def xshap():
     epoches = []
     shap_values = []
     ic = 0
-    MX = len(test_dataloader)
+    MX = 2001 # len(test_dataloader)
     for _, data in tqdm(enumerate(test_dataloader)):
         ic += 1
         if ic == MX - 1:

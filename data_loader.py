@@ -42,7 +42,7 @@ def load_labels(inp=params.LABEL_FILE):
 
 
 def load_seq_data(times, labels, inp=params.SEQUENCE_FILE):
-    fin = open(inp)
+    fin = open(inp, encoding='utf-8', errors='ignore')
     print(times[:10])
     print(labels[:10])
     while True:
@@ -78,7 +78,11 @@ def load_seq_data(times, labels, inp=params.SEQUENCE_FILE):
         c_seqs = [[], [], []]
         is_next_seg = False
         while not is_exit and not is_next_seg:
-            assert len(value_texts) == 3
+            if len(value_texts) != 3:
+                print(cid, line, value_texts)
+                is_exit = True
+                break
+
             for i, value_text in enumerate(value_texts):
                 v = float(value_text)
                 if abs(v) > mxs[i]:
@@ -100,6 +104,8 @@ def load_seq_data(times, labels, inp=params.SEQUENCE_FILE):
                     is_next_seg = True
 
     fin.close()
+    label_seqs = label_seqs[:len(value_seqs[0])]
+    assert len(value_seqs[0]) == len(label_seqs), "%s_%s" % (len(value_seqs[0]), len(label_seqs))
     return value_seqs, label_seqs, mxs
 
 
