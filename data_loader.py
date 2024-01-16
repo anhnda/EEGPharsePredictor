@@ -21,7 +21,7 @@ def load_labels(inp=params.LABEL_FILE):
             break
     if line == "":
         return [], []
-
+    ic = 0
     while True:
         line = fin.readline()
         if line == "":
@@ -30,12 +30,12 @@ def load_labels(inp=params.LABEL_FILE):
             continue
         parts = line.split("\t")
         # print(parts)
-        epoch_id = parts[0]
+        epoch_id = int(parts[0])
         lb_text = parts[1]
         time_text = parts[2]
         label_v = utils.get_insert_dict_index(lb_dict, lb_text)
         time_v = utils.convert_time(time_text)
-        labels.append(label_v)
+        labels.append([label_v, epoch_id])
         times.append(time_v)
     fin.close()
     return labels, times, lb_dict

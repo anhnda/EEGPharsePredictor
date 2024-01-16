@@ -34,7 +34,7 @@ def plot3c(value_seq, score_seq, name, subtitles, n_channels=3, show=True):
         vs = value_seq[i, :]
         ss = score_seq[i, :]
         axes[0, i].plot(x, vs, [-0.2, 0.2])
-        axes[1, i].scatter(x, ss * 1000, c='green')
+        axes[1, i].scatter(x, ss *10, c='green')
         axes[1, i].set_ylim(-0.2, 0.2)
         for ax in [axes[0, i], axes[1, i]]:
             if len(vs) >= 3 * params.MAX_SEQ_SIZE - 1:
@@ -55,8 +55,10 @@ def plot3c(value_seq, score_seq, name, subtitles, n_channels=3, show=True):
 
 def plot_id(idx, show=False):
     val = np.squeeze(val_seqs[idx])
+    # val = val / np.max(np.abs(val)) * 0.2
     label = labels[idx]
     lbw = lbws[idx]
+    epoch_id = epochess[idx]
     lbw_names = [idx2lb[jj] for jj in lbw]
     prediction = np.loadtxt("out/predicted.txt")[idx]
     pred_id = np.argmax(prediction)
@@ -64,9 +66,11 @@ def plot_id(idx, show=False):
     label_id = np.nonzero(label)[0][0]
     print("LB: ", label_id, label, lbw[1], lbw_names)
     shs = shaps[idx][pred_id, :]
-    print(shs.shape, val.shape)
+    shs = shs / np.max(np.abs(shs)) * 0.05
+    print()
+    print(shs.shape, val.shape, np.max(shs))
     # print(label_id)
-    name = "%sX_T_%s_%s_P_%s_%s" % (idx + 1, label_id, idx2lb[label_id], pred_id, idx2lb[pred_id])
+    name = "%sX_O_%s_T_%s_%s_P_%s_%s" % (idx + 1, epoch_id, label_id, idx2lb[label_id], pred_id, idx2lb[pred_id])
     if params.THREE_CHAINS:
         plot3c(val, shs, name, lbw_names, show=show)
     else:
@@ -74,18 +78,19 @@ def plot_id(idx, show=False):
 
 
 if __name__ == "__main__":
-    val_seqs, labels, lbws, shaps, idx2lb = joblib.load("out/xmodel.pkl")
+    val_seqs, labels, lbws, shaps, idx2lb, epochess = joblib.load("out/xmodel.pkl")
     shaps = np.squeeze(np.asarray(shaps))
+    epochess = np.squeeze(np.asarray(epochess))
     print(idx2lb)
     # print(len(val_seqs), len(val_seqs[0]), val_seqs[0].shape)
     # exit(-1)
     for i in range(2000):
         plot_id(i, show=False)
     exit(-1)
-    while True:
-        idx = int(input("Enter Test Index: "))
-        if idx == -1:
-            print("Exit")
-            exit(-1)
-        idx = idx - 1
-        plot_id(idx, show=False)
+    # while True:
+    #     idx = int(input("Enter Test Index: "))
+    #     if idx == -1:
+    #         print("Exit")
+    #         exit(-1)
+    #     idx = idx - 1
+    #     plot_id(idx, show=False)

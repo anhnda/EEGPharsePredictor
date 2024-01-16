@@ -34,7 +34,7 @@ def train():
         model.train()
         for it, data in enumerate(tqdm(train_dataloader)):
             optimizer.zero_grad()
-            x, lb, _ = data
+            x, lb, _, _ = data
             # print(x.shape, lb)
             # exit(-1)
             if model.type == "Transformer":
@@ -58,7 +58,7 @@ def train():
         print("Train last loss: ", loss)
         model.eval()
         for _, data in enumerate(test_dataloader):
-            x, lb, lws = data
+            x, lb, lws, _ = data
             if is_first_test:
                 xs.append(x)
                 lbs.append(lb)

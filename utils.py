@@ -1,4 +1,5 @@
 from datetime import datetime
+import os
 def get_insert_dict_index(d, k):
     try:
         v = d[k]
@@ -20,3 +21,7 @@ def convert_time(time_string, offset=946659600000):
     except:
         millisec = -1
     return millisec
+
+def ensureDir(path):
+    if not os.path.exists(path):
+        os.makedirs(path)
