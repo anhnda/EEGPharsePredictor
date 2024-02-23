@@ -48,31 +48,31 @@ class CNNModel3C(nn.Module):
             layer1 = nn.Sequential(nn.Dropout(0.1),
                                    nn.Conv1d(1, n_base * 3, kernel_size=11, stride=4, padding=0),
                                    # nn.BatchNorm1d(n_base * 3),
-                                   nn.ReLU(),
+                                   nn.LeakyReLU(),
                                    # nn.MaxPool1d(kernel_size=3, stride=2)
                                    BiMaxPooling(kernel_size=3, stride=2)
                                    )
 
             layer2 = nn.Sequential(nn.Conv1d(n_base * 3 * 2, n_base * 8, kernel_size=5, stride=1, padding=2),
                                    # nn.BatchNorm1d(n_base * 8),
-                                   nn.ReLU(),
+                                   nn.LeakyReLU(),
                                    BiMaxPooling(kernel_size=3, stride=2))
 
             layer3 = nn.Sequential(nn.Conv1d(n_base * 8 * 2, n_base * 20, kernel_size=3, stride=1, padding=2),
                                    # nn.BatchNorm1d(n_base * 10),
-                                   nn.ReLU(),
+                                   nn.LeakyReLU(),
                                    BiMaxPooling(kernel_size=3, stride=2)
                                    )
 
             layer4 = nn.Sequential(nn.Conv1d(n_base * 20 * 2, n_base * 8, kernel_size=3, stride=1, padding=2),
                                    # nn.BatchNorm1d(n_base * 8),
-                                   nn.ReLU(),
+                                   nn.LeakyReLU(),
                                    BiMaxPooling(kernel_size=3, stride=2)
                                    )
 
             layer5 = nn.Sequential(nn.Conv1d(n_base * 8 * 2, n_base * 6, kernel_size=3, stride=1, padding=2),
                                    # nn.BatchNorm1d(n_base * 6),
-                                   nn.ReLU(),
+                                   nn.LeakyReLU(),
                                    BiMaxPooling(kernel_size=3, stride=2)
                                    )
             self.chains[i].append(layer1)
@@ -82,7 +82,7 @@ class CNNModel3C(nn.Module):
             self.chains[i].append(layer5)
 
             # self.fc1 = nn.Sequential(nn.Dropout(0.1), nn.Linear(2304, 320), nn.ReLU())
-            fc1 = nn.Sequential(nn.Dropout(0.1), nn.Linear(get_dim(base_dim, self.flag), 320), nn.ReLU())
+            fc1 = nn.Sequential(nn.Dropout(0.1), nn.Linear(get_dim(base_dim, self.flag), 320), nn.LeakyReLU())
             self.chains[i].append(fc1)
             # self.fc1 = nn.Sequential(nn.Dropout(0.1), nn.Linear(1536, 320), nn.ReLU())
 

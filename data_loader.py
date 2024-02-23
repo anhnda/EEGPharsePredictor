@@ -6,13 +6,19 @@ import os
 LABEL_MARKER = "EpochNo"
 SEQ_MARKER = "Time"
 
+LB_DICT = {'W': 0, 'W*': 1, 'NR': 2, 'NR*': 3, 'R': 4, 'R*': 5}
 
+def get_lbid(lb_text):
+    try:
+        lb_id = LB_DICT[lb_text]
+    except:
+        lb_id = len(LB_DICT)
+    return lb_id
 def load_labels(inp=params.LABEL_FILE):
     fin = open(inp, errors='ignore')
 
     labels = []
     times = []
-    lb_dict = dict()
     while True:
         line = fin.readline()
         if line == "":
@@ -33,12 +39,12 @@ def load_labels(inp=params.LABEL_FILE):
         epoch_id = int(parts[0])
         lb_text = parts[1]
         time_text = parts[2]
-        label_v = utils.get_insert_dict_index(lb_dict, lb_text)
+        label_v = get_lbid(lb_text)
         time_v = utils.convert_time(time_text)
         labels.append([label_v, epoch_id])
         times.append(time_v)
     fin.close()
-    return labels, times, lb_dict
+    return labels, times, LB_DICT
 
 
 def load_seq_data(times, labels, inp=params.SEQUENCE_FILE):
@@ -112,6 +118,7 @@ def load_seq_data(times, labels, inp=params.SEQUENCE_FILE):
 def load_data(force_reload=False):
     if os.path.exists(params.DUMP_FILE) and force_reload is False:
         value_seqs, label_seqs, mxs, lb_dict = joblib.load(params.DUMP_FILE)
+        print(lb_dict)
     else:
         labels, times, lb_dict = load_labels(params.LABEL_FILE)
         value_seqs, label_seqs, mxs = load_seq_data(times, labels, params.SEQUENCE_FILE)

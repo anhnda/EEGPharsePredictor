@@ -3,9 +3,29 @@ from sklearn.metrics import roc_auc_score, average_precision_score, precision_sc
 import seaborn as sns
 from matplotlib import pyplot as plt
 
-LB_DICT = {0: 'W*', 1: 'W', 2: 'NR', 3: 'NR*', 4: 'R*', 5: 'R', 6: 'S2*'}
-
+LB_DICT = {'W': 0, 'W*': 1, 'NR': 2, 'NR*': 3, 'R': 4, 'R*': 5}
+LB_DICT = { v : k for k, v in LB_DICT.items()}
 LBS = [LB_DICT[i] for i in range(6)]
+def get_confussion_from_list(lbs, preds, n_class):
+    cfs_matrix = np.zeros((n_class, n_class))
+    for i in range(len(lbs)):
+        if lbs[i] >= n_class or preds[i] >= n_class:
+            continue
+        cfs_matrix[lbs[i], preds[i]] += 1
+    print(np.sum(cfs_matrix))
+    return cfs_matrix
+def plot_cfs_matrix(cfs_matrix, show=False):
+    plt.figure()
+    print(cfs_matrix)
+    fig, ax = plt.subplots()
+    sns.heatmap(cfs_matrix, cmap=sns.color_palette("flare", as_cmap=True), xticklabels=LBS, yticklabels=LBS)
+    ax.xaxis.tick_top()
+    plt.ylabel("True")
+    plt.xlabel("Prediction")
+    plt.savefig("confusion_matrix.png")
+    if show:
+        plt.show()
+
 def create_confusion(y_true, y_pred, n_class):
     cl_true = np.nonzero(y_true)[1]
     cl_pred = np.nonzero(y_pred)[1]
@@ -37,13 +57,7 @@ def eval_multiclasses(y_true, y_score, combine=True):
     # print(pred)
     # print(pred)
     cfs_matrix = create_confusion(y_true, pred, n_class=6)
-    fig, ax = plt.subplots()
-
-    sns.heatmap(cfs_matrix, cmap=sns.color_palette("flare", as_cmap=True), xticklabels=LBS, yticklabels=LBS)
-    ax.xaxis.tick_top()
-    plt.ylabel("True")
-    plt.xlabel("Prediction")
-    plt.show()
+    plot_cfs_matrix(cfs_matrix, show=True)
     pres, recs, f1s = [], [], []
     for i in range(nc):
         y_i = y_true[:, i]

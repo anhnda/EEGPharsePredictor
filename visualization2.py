@@ -1,8 +1,11 @@
+import os
+
 import numpy as np
 from matplotlib import pyplot as plt
 import joblib
 
 import params
+import utils
 
 CHANNEL_NAMES = ["EEG6", "EMG6", "MOT6"]
 
@@ -50,8 +53,8 @@ def plot3c(value_seq, score_seq, name, subtitles, n_channels=3, show=True):
     fig.suptitle(name)
     plt.tight_layout()
     plt.savefig("figs/%s.png" % name)
-    if show:
-        plt.show()
+    # if show:
+    #     plt.show()
 
 def plot_id(idx, show=False):
     val = np.squeeze(val_seqs[idx])
@@ -59,8 +62,14 @@ def plot_id(idx, show=False):
     label = labels[idx]
     lbw = lbws[idx]
     epoch_id = epochess[idx]
-    lbw_names = [idx2lb[jj] for jj in lbw]
-    prediction = np.loadtxt("out/predicted.txt")[idx]
+    lbw_names = []
+    for jj in lbw:
+        if jj != -1:
+            lbw_names.append(idx2lb[jj])
+        else:
+            lbw_names.append("PAD")
+
+    prediction = preds[idx]
     pred_id = np.argmax(prediction)
     # print(label)
     label_id = np.nonzero(label)[0][0]
@@ -76,17 +85,41 @@ def plot_id(idx, show=False):
     else:
         plot(val, shs, name, show=show)
 
-
+    return label_id, pred_id
 if __name__ == "__main__":
-    val_seqs, labels, lbws, shaps, idx2lb, epochess = joblib.load("out/xmodel.pkl")
+    os.system("rm -rf figs/*")
+    utils.ensureDir("figs")
+
+    MODEL_ID = 1
+    TEST_ID = 1
+    model_xpath     = "out/xmodel_%s_%s.pkl" % (MODEL_ID, TEST_ID)
+    print("Model xpath: ", model_xpath)
+    val_seqs, labels, lbws, shaps, idx2lb, epochess, preds = joblib.load(model_xpath)
     shaps = np.squeeze(np.asarray(shaps))
     epochess = np.squeeze(np.asarray(epochess))
     print(idx2lb)
     # print(len(val_seqs), len(val_seqs[0]), val_seqs[0].shape)
     # exit(-1)
-    for i in range(2000):
-        plot_id(i, show=False)
-    exit(-1)
+    all_preds = []
+    all_lbs = []
+
+    for i in range(1999):
+        if i == 100:
+            break
+        lb, pred = plot_id(i, show=False)
+        all_preds.append(pred)
+        all_lbs.append(lb)
+    print(all_lbs)
+    print(all_preds)
+    from evals import get_confussion_from_list, plot_cfs_matrix
+    from sklearn.metrics import precision_score, recall_score, f1_score
+    cfs_matrix = get_confussion_from_list(all_lbs, all_preds, 6)
+    plot_cfs_matrix(cfs_matrix, False)
+    print("Precision: ", precision_score(all_lbs, all_preds, average='macro'))
+    print("Recall: ", recall_score(all_lbs, all_preds, average='macro'))
+    print("F1: ", f1_score(all_lbs, all_preds, average='macro'))
+
+    # exit(-1)
     # while True:
     #     idx = int(input("Enter Test Index: "))
     #     if idx == -1:

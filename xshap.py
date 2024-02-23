@@ -8,6 +8,7 @@ import torch
 from tqdm import tqdm
 import numpy as np
 import joblib
+from params import get_dump_filename
 params.DEVICE = "mps"
 
 from get_model import get_model, TILE_SEQ, SIDE_FLAG, device
@@ -21,10 +22,17 @@ def load_model(model, path):
 
 
 def xshap():
-    dataset = EGGDataset(tile_seq=TILE_SEQ, side_flag=SIDE_FLAG)
+    MODEL_ID = 1
+    TEST_ID = 1
+    params.DID = TEST_ID
+    print("Data info: DID: ", params.DID, get_dump_filename())
+    dataset = EGGDataset(tile_seq=TILE_SEQ, dump_path=get_dump_filename(), side_flag=SIDE_FLAG)
     n_class = dataset.get_num_class()
+    params.DID = MODEL_ID
     model = get_model(n_class).to(device)
-    load_model(model, "out/model_%s.pkl" % params.DID)
+    model_path = "out/model_%s.pkl" % MODEL_ID
+    print("Model path: ", model_path)
+    load_model(model, model_path)
     generator1 = torch.Generator().manual_seed(params.RD_SEED)
     train_dt, test_dt = random_split(dataset, [0.8, 0.2], generator=generator1)
     train_dataloader = DataLoader(train_dt, batch_size=params.BATCH_SIZE * 2, num_workers=1, shuffle=True,
@@ -37,7 +45,7 @@ def xshap():
     samples = samples.float().to(device)
     explainer = GradientExplainer(model, samples)
     #
-    test_dataloader = DataLoader(test_dt, batch_size=1, shuffle=False)
+    test_dataloader = DataLoader(test_dt, batch_size=1, num_workers=0, shuffle=False)
     sm = torch.nn.Softmax(dim=-1)
     xs = []
     lbs = []
@@ -45,7 +53,8 @@ def xshap():
     epoches = []
     shap_values = []
     ic = 0
-    MX = 2001 # len(test_dataloader)
+    MX = 102 # len(test_dataloader)
+    preds = []
     for _, data in tqdm(enumerate(test_dataloader)):
         ic += 1
         if ic == MX - 1:
@@ -58,6 +67,9 @@ def xshap():
             x = torch.unsqueeze(x, 1)
         x = x.float().to(device)
         # print("X in", x.shape)
+        pred = model(x)
+        pred = sm(pred).detach().cpu()
+        preds.append(pred)
         shap_v = explainer.shap_values(x)
         xs.append(x)
         lbs.append(lb)
@@ -71,14 +83,16 @@ def xshap():
             lbss = torch.concat(lbs, dim=0).detach().cpu().numpy()
             lbwss = torch.concat(lbws, dim=0).detach().cpu().numpy()
             epochess = torch.concat(epoches).detach().cpu().numpy()
-            joblib.dump([xss, lbss, lbwss, shap_values, dataset.idx_2lb, epochess], "out/xmodel.pkl")
+            predss = torch.concat(preds, dim=0).numpy()
+            joblib.dump([xss, lbss, lbwss, shap_values, dataset.idx_2lb, epochess, predss], "out/xmodel_%s_%s.pkl" % (MODEL_ID, TEST_ID))
 
     xs = torch.concat(xs, dim=0).detach().cpu().numpy()
     lbs = torch.concat(lbs, dim=0).detach().cpu().numpy()
     lbws = torch.concat(lbws, dim=0).detach().cpu().numpy()
     epochess = torch.concat(epoches).detach().cpu().numpy()
+    predss = torch.concat(preds, dim=0).numpy()
 
-    joblib.dump([xs, lbs,lbws, shap_values,dataset.idx_2lb, epochess], "out/xmodel.pkl")
+    joblib.dump([xs, lbs,lbws, shap_values,dataset.idx_2lb, epochess, predss], "out/xmodel_%s_%s.pkl" % (MODEL_ID, TEST_ID))
 
 
 if __name__ == "__main__":

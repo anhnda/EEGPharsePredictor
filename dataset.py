@@ -24,22 +24,24 @@ class EGGDataset(Dataset):
         self.label_seqs = label_seqs
         self.lb_dict = lb_dict
         self.idx_2lb = {v: k for k, v in lb_dict.items()}
-        self.num_class = len(lb_dict)
+        self.idx_2lb.update({6: "X"})
+        self.num_class = params.NUM_CLASSES
         self.cls = torch.zeros((params.D_MODEL, 1))
         self.tile_seq = tile_seq
         self.cls_pad = cls_pad
         self.side_flag = side_flag
-
 
     def __len__(self):
         return len(self.label_seqs)
 
     def get_num_class(self):
         return self.num_class
+
     def __getlb_idx(self, idx):
         if idx < 0 or idx >= self.__len__():
             return [-1, -1]
         return self.label_seqs[idx]
+
     def __getseq_idx(self, idx):
         # print(idx)
         if idx < 0 or idx >= self.__len__():
@@ -55,12 +57,15 @@ class EGGDataset(Dataset):
                 value_seq = np.asarray(self.value_seqs[0][idx]) / self.mx
 
         value_seq = torch.from_numpy(value_seq)
+        # value_seq[0, :] = 0
+        value_seq[2, :] = 0
         return value_seq
 
     def __getitem__(self, idx):
         value_seq = self.__getseq_idx(idx)
         if params.THREE_CHAINS:
             assert len(value_seq[0]) == params.MAX_SEQ_SIZE
+            # value_seq[2].fill(0)
         else:
             assert len(value_seq) == params.MAX_SEQ_SIZE
         label_id, epoch_id = self.label_seqs[idx]
@@ -77,13 +82,14 @@ class EGGDataset(Dataset):
             if self.side_flag == params.TWO_SIDE:
                 value_seq_left = self.__getseq_idx(idx - 1)
                 value_seq_right = self.__getseq_idx(idx + 1)
-                value_seq = torch.concat((value_seq_left, value_seq, value_seq_right),dim=-1)
-                label_windows = [self.__getlb_idx(idx-1)[0], label_id, self.__getlb_idx(idx+1)[0]]
+                value_seq = torch.concat((value_seq_left, value_seq, value_seq_right), dim=-1)
+
+                label_windows = [self.__getlb_idx(idx - 1)[0], label_id, self.__getlb_idx(idx + 1)[0]]
             elif self.side_flag == params.LEFT:
 
                 value_seq_left = self.__getseq_idx(idx - 1)
                 value_seq = torch.concat((value_seq_left, value_seq), dim=-1)
-                label_windows = [label_id, self.__getlb_idx(idx+1)[0]]
+                label_windows = [label_id, self.__getlb_idx(idx + 1)[0]]
         # print("Val seq", value_seq)
         # print("Lb ar", label_ar)
         # print("LB windows", torch.asarray(label_windows))

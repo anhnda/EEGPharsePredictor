@@ -1,15 +1,27 @@
-# DATA_DIR = "./EEG_test_files"
-# SEQUENCE_FILE = "%s/ELES_K3_EEG3_SAL_11h.txt" % DATA_DIR
-# LABEL_FILE = "%s/ELES_20211002_K3_EEG3_10775-fenyvaltasig-PN_OK másolata_cFFT_11h_P.txt" % DATA_DIR
-# DUMP_FILE = "%s/dump_egg.pkl" % DATA_DIR
-
-
-DID = 2
+DID = 1
 DATA_DIR = "./EEG_test_files-2"
-SEQUENCE_FILE = "%s/raw_S1_EEG1_23 hr.txt" % DATA_DIR
-LABEL_FILE = "%s/S1_EEG1_23 hr.txt" % DATA_DIR
+SEQUENCE_FILE = "%s/ELES_K3_EEG3_SAL_11h.txt" % DATA_DIR
+LABEL_FILE = "%s/ELES_20211002_K3_EEG3_10775-fenyvaltasig-PN_OK másolata_cFFT_11h_P.txt" % DATA_DIR
 DUMP_FILE = "%s/dump_egg_%s.pkl" % (DATA_DIR, DID)
 
+#
+# DID = 2
+# DATA_DIR = "./EEG_test_files-2"
+# SEQUENCE_FILE = "%s/raw_S1_EEG1_23 hr.txt" % DATA_DIR
+# LABEL_FILE = "%s/S1_EEG1_23 hr.txt" % DATA_DIR
+# DUMP_FILE = "%s/dump_egg_%s.pkl" % (DATA_DIR, DID)
+
+#
+# DID = 3
+# DATA_DIR = "./EEG_test_files-2"
+# SEQUENCE_FILE = "%s/raw_RS2_EEG1_23 hr.txt" % DATA_DIR
+# LABEL_FILE = "%s/RS2_EEG1_23 hr.txt" % DATA_DIR
+# DUMP_FILE = "%s/dump_egg_%s.pkl" % (DATA_DIR, DID)
+
+NUM_CLASSES = 7
+def get_dump_filename():
+
+    return "%s/dump_egg_%s.pkl" % (DATA_DIR, DID)
 
 MAX_SEQ_SIZE = 1024
 D_MODEL = 64
