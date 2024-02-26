@@ -14,23 +14,26 @@ params.DEVICE = "mps"
 from get_model import get_model, TILE_SEQ, SIDE_FLAG, device
 import shap
 from shap import DeepExplainer, GradientExplainer
+from train import get_model_dirname
 
-
-
+from optparse import OptionParser
+import sys
+from train import parse_x
 def load_model(model, path):
     model.load_state_dict(torch.load(path))
 
 
-def xshap():
-    MODEL_ID = 1
-    TEST_ID = 1
+def xshap(model_id=1, test_id = 1):
+    MODEL_ID = model_id
+    TEST_ID = test_id
     params.DID = TEST_ID
     print("Data info: DID: ", params.DID, get_dump_filename())
     dataset = EGGDataset(tile_seq=TILE_SEQ, dump_path=get_dump_filename(), side_flag=SIDE_FLAG)
     n_class = dataset.get_num_class()
     params.DID = MODEL_ID
     model = get_model(n_class).to(device)
-    model_path = "out/model_%s.pkl" % MODEL_ID
+    model_dir = get_model_dirname()
+    model_path = "%s/model_%s.pkl" % (get_model_dirname(), MODEL_ID)
     print("Model path: ", model_path)
     load_model(model, model_path)
     generator1 = torch.Generator().manual_seed(params.RD_SEED)
@@ -53,7 +56,7 @@ def xshap():
     epoches = []
     shap_values = []
     ic = 0
-    MX = 102 # len(test_dataloader)
+    MX = 202 # len(test_dataloader)
     preds = []
     for _, data in tqdm(enumerate(test_dataloader)):
         ic += 1
@@ -84,7 +87,7 @@ def xshap():
             lbwss = torch.concat(lbws, dim=0).detach().cpu().numpy()
             epochess = torch.concat(epoches).detach().cpu().numpy()
             predss = torch.concat(preds, dim=0).numpy()
-            joblib.dump([xss, lbss, lbwss, shap_values, dataset.idx_2lb, epochess, predss], "out/xmodel_%s_%s.pkl" % (MODEL_ID, TEST_ID))
+            joblib.dump([xss, lbss, lbwss, shap_values, dataset.idx_2lb, epochess, predss], "%s/xmodel_%s_%s.pkl" % (get_model_dirname(), MODEL_ID, TEST_ID))
 
     xs = torch.concat(xs, dim=0).detach().cpu().numpy()
     lbs = torch.concat(lbs, dim=0).detach().cpu().numpy()
@@ -92,8 +95,9 @@ def xshap():
     epochess = torch.concat(epoches).detach().cpu().numpy()
     predss = torch.concat(preds, dim=0).numpy()
 
-    joblib.dump([xs, lbs,lbws, shap_values,dataset.idx_2lb, epochess, predss], "out/xmodel_%s_%s.pkl" % (MODEL_ID, TEST_ID))
+    joblib.dump([xs, lbs,lbws, shap_values,dataset.idx_2lb, epochess, predss], "%s/xmodel_%s_%s.pkl" % (get_model_dirname(), MODEL_ID, TEST_ID))
 
 
 if __name__ == "__main__":
-    xshap()
+    parse_x()
+    xshap(params.TRAIN_ID, params.TEST_ID)

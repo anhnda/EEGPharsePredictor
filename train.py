@@ -1,6 +1,8 @@
 import math
+from optparse import OptionParser
 
 import params
+import utils
 from dataset import EGGDataset
 from torch.utils.data import DataLoader
 from torch.utils.data import random_split
@@ -14,11 +16,42 @@ from get_model import get_model, TILE_SEQ, SIDE_FLAG, device
 
 CLASS_WEIGHT = None # torch.tensor([2, 1, 0.1,  2, 2, 0.5, 0]).float().to(device)
 CLASS_WEIGHT2 = None #torch.tensor([2, 1, 0.1,  2, 2, 0.5]).float()
+def get_model_dirname():
+    return "out/M_EGG{}_EMG{}_MOT{}_RD{}".format(not params.OFF_EGG,not params.OFF_EMG, not params.OFF_MOT, params.RD_SEED)
+
+
+def parse_x():
+    parser = OptionParser()
+    parser.add_option("-a", "--regg", dest="regg", action="store_true", help="advanced model")
+    parser.add_option("-b", "--remg", dest="remg", action="store_true", help="advanced model")
+    parser.add_option("-c", "--rmot", dest="rmot", action="store_true", help="advanced model")
+
+    parser.add_option("-m", "--train", dest="train", type='int', default=1, help="validation fold id")
+    parser.add_option("-e", "--test", dest="test", type='int', default=1, help="validation fold id")
+
+    (cmd_options, args) = parser.parse_args()
+    if cmd_options.regg:
+        params.OFF_EGG = True
+    if cmd_options.remg:
+        params.OFF_EMG = True
+    if cmd_options.rmot:
+        params.OFF_MOT = True
+    print(cmd_options, params.OFF_EGG, params.OFF_EMG, params.OFF_MOT, params.RD_SEED)
+    params.TRAIN_ID = cmd_options.train
+    parser.TEST_ID = cmd_options.test
 def train():
+    torch.manual_seed(params.RD_SEED)
+    generator1 = torch.Generator().manual_seed(params.RD_SEED)
+
+    model_dir = get_model_dirname()
+    utils.ensureDir(model_dir)
+
+    from my_logger.logger2 import MyLogger
+    logger = MyLogger(model_dir + "/log.txt")
+
     dataset = EGGDataset(tile_seq=TILE_SEQ, side_flag=SIDE_FLAG)
     n_class = dataset.get_num_class()
     model = get_model(n_class)
-    generator1 = torch.Generator().manual_seed(params.RD_SEED)
     train_dt, test_dt = random_split(dataset, [0.8, 0.2], generator=generator1)
     train_dataloader = DataLoader(train_dt, batch_size=params.BATCH_SIZE, num_workers=1, shuffle=True, drop_last=True)
     test_dataloader = DataLoader(test_dt, batch_size=params.BATCH_SIZE, num_workers=0, shuffle=False)
@@ -30,6 +63,7 @@ def train():
     min_id = -1
     sm = torch.nn.Softmax(dim=-1)
     is_first_test = True
+    all_res = []
     for epoch_id in range(params.N_EPOCH):
         model.train()
         for it, data in enumerate(tqdm(train_dataloader)):
@@ -85,29 +119,35 @@ def train():
         auc, aupr = roc_auc_score(true_test, predicted_test), average_precision_score(true_test, predicted_test)
         f1x = 2* auc * aupr / (auc + aupr + 1e-10)
         test_loss = loss_function2(predicted_test, true_test)
-        print(torch.sum(true_test, dim=0))
-        print(sm(predicted_test[:2, :]), true_test[:2, :])
+        logger.infoAll(torch.sum(true_test, dim=0))
+        logger.infoAll((sm(predicted_test[:2, :]), true_test[:2, :]))
         ss = sm(predicted_test)
         test_loss2 = test_loss
+
+
         if params.CRITERIA == "F1X":
             test_loss2 = - f1x
         if min_test_loss > test_loss2:
             min_test_loss = test_loss2
             min_id = epoch_id
-            np.savetxt("out/predicted_%s.txt" % params.DID, ss, fmt="%.4f")
-            torch.save(model.state_dict(), "out/model_%s.pkl" % params.DID)
+            np.savetxt("%s/predicted_%s.txt" % (get_model_dirname(), params.DID), ss, fmt="%.4f")
+            torch.save(model.state_dict(), "%s/model_%s.pkl" % (get_model_dirname(), params.DID))
 
-            print("Find new Best: ", test_loss, math.fabs(test_loss2), math.fabs(min_test_loss))
+            logger.infoAll(("Find new Best: ", test_loss, math.fabs(test_loss2), math.fabs(min_test_loss)))
             if is_first_test:
                 # xs = torch.concat(xs, dim=0).detach().cpu().numpy()
                 # lbs = torch.concat(lbs, dim=0).detach().cpu().numpy()
                 # lbws = torch.concat(lbws, dim=0).detach().cpu().numpy()
-                np.savetxt("out/true.txt", true_test, fmt="%d")
-                joblib.dump([xs, lbs, lbws, dataset.idx_2lb], "out/test_data.pkl")
+                np.savetxt("%s/true.txt" % (get_model_dirname()), true_test, fmt="%d")
+                joblib.dump([xs, lbs, lbws, dataset.idx_2lb], "%s/test_data.pkl" % get_model_dirname())
                 is_first_test = False
-        print("Error Test: ", params.CRITERIA, test_loss, math.fabs(test_loss2), math.fabs(min_test_loss)
-              , epoch_id, min_id, auc, aupr)
-
+        logger.infoAll(("Error Test: ", params.CRITERIA, test_loss, math.fabs(test_loss2), math.fabs(min_test_loss)
+              , epoch_id, min_id, auc, aupr))
+        logger.infoAll(("Best lost: ", math.fabs(min_test_loss), min_id))
+        all_res.append([test_loss, math.fabs(test_loss2), math.fabs(min_test_loss)
+              , epoch_id, min_id, auc, aupr])
+    logger.infoAll(("Best values: ", all_res[min_id]))
 
 if __name__ == "__main__":
+    parse_x()
     train()

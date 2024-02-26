@@ -17,7 +17,7 @@ DUMP_FILE = "%s/dump_egg_%s.pkl" % (DATA_DIR, DID)
 # SEQUENCE_FILE = "%s/raw_RS2_EEG1_23 hr.txt" % DATA_DIR
 # LABEL_FILE = "%s/RS2_EEG1_23 hr.txt" % DATA_DIR
 # DUMP_FILE = "%s/dump_egg_%s.pkl" % (DATA_DIR, DID)
-
+W_DIR = "."
 NUM_CLASSES = 7
 def get_dump_filename():
 
@@ -27,7 +27,7 @@ MAX_SEQ_SIZE = 1024
 D_MODEL = 64
 RD_SEED = 1
 BATCH_SIZE = 10
-N_EPOCH = 100
+N_EPOCH = 20
 THREE_CHAINS = True
 LEFT = 2
 TWO_SIDE = 3
@@ -36,3 +36,9 @@ DEVICE = "mps"
 MODE_TYPE = "CNN3C"
 SIDE_FLAG = TWO_SIDE
 CRITERIA = "F1X"
+OFF_EGG = False
+OFF_EMG = False
+OFF_MOT = False
+
+TRAIN_ID = 1
+TEST_ID = 1

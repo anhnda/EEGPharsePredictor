@@ -57,8 +57,12 @@ class EGGDataset(Dataset):
                 value_seq = np.asarray(self.value_seqs[0][idx]) / self.mx
 
         value_seq = torch.from_numpy(value_seq)
-        # value_seq[0, :] = 0
-        value_seq[2, :] = 0
+        if params.OFF_EGG:
+            value_seq[0, :] = 0
+        if params.OFF_EMG:
+            value_seq[1, :] = 0
+        if params.OFF_MOT:
+            value_seq[2, :] = 0
         return value_seq
 
     def __getitem__(self, idx):

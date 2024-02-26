@@ -14,7 +14,7 @@ def get_confussion_from_list(lbs, preds, n_class):
         cfs_matrix[lbs[i], preds[i]] += 1
     print(np.sum(cfs_matrix))
     return cfs_matrix
-def plot_cfs_matrix(cfs_matrix, show=False):
+def plot_cfs_matrix(cfs_matrix, show=False, out_dir=None):
     plt.figure()
     print(cfs_matrix)
     fig, ax = plt.subplots()
@@ -22,7 +22,7 @@ def plot_cfs_matrix(cfs_matrix, show=False):
     ax.xaxis.tick_top()
     plt.ylabel("True")
     plt.xlabel("Prediction")
-    plt.savefig("confusion_matrix.png")
+    plt.savefig("%s/confusion_matrix.png" % out_dir)
     if show:
         plt.show()
 
