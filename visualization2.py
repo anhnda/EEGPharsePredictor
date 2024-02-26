@@ -7,10 +7,11 @@ import joblib
 import params
 import utils
 from train import get_model_dirname, parse_x
+
 CHANNEL_NAMES = ["EEG6", "EMG6", "MOT6"]
 
 
-def plot(value_seq, score_seq, name,show=True, out_dir=None):
+def plot(value_seq, score_seq, name, show=True, out_dir=None):
     x = [i for i in range(len(value_seq))]
     fig, axes = plt.subplots(2, 1, figsize=(6, 8))
     axes[0].plot(x, value_seq)
@@ -28,7 +29,7 @@ def plot(value_seq, score_seq, name,show=True, out_dir=None):
         plt.show()
 
 
-def plot3c(value_seq, score_seq, name, subtitles, n_channels=3, show=True, out_dir = "figs"):
+def plot3c(value_seq, score_seq, name, subtitles, n_channels=3, show=True, out_dir="figs"):
     plt.figure()
 
     x = [i for i in range(value_seq.shape[-1])]
@@ -37,7 +38,7 @@ def plot3c(value_seq, score_seq, name, subtitles, n_channels=3, show=True, out_d
         vs = value_seq[i, :]
         ss = score_seq[i, :]
         axes[0, i].plot(x, vs, [-0.2, 0.2])
-        axes[1, i].scatter(x, ss *10, c='green')
+        axes[1, i].scatter(x, ss * 10, c='green')
         axes[1, i].set_ylim(-0.2, 0.2)
         for ax in [axes[0, i], axes[1, i]]:
             if len(vs) >= 3 * params.MAX_SEQ_SIZE - 1:
@@ -55,6 +56,7 @@ def plot3c(value_seq, score_seq, name, subtitles, n_channels=3, show=True, out_d
     plt.savefig("%s/%s.png" % (out_dir, name))
     # if show:
     #     plt.show()
+
 
 def plot_id(idx, show=False, out_dir=None):
     val = np.squeeze(val_seqs[idx])
@@ -86,15 +88,17 @@ def plot_id(idx, show=False, out_dir=None):
         plot(val, shs, name, show=show)
 
     return label_id, pred_id
+
+
 if __name__ == "__main__":
     parse_x()
     fig_dir = get_model_dirname() + "/figs/" + "%s" % params.TRAIN_ID + "_" + "%s" % params.TEST_ID
-    os.system("rm -rf %s/*"% fig_dir)
+    os.system("rm -rf %s/*" % fig_dir)
     utils.ensureDir(fig_dir)
 
     MODEL_ID = params.TRAIN_ID
     TEST_ID = params.TEST_ID
-    model_xpath     = "%s/xmodel_%s_%s.pkl" % (get_model_dirname(), MODEL_ID, TEST_ID)
+    model_xpath = "%s/xmodel_%s_%s.pkl" % (get_model_dirname(), MODEL_ID, TEST_ID)
     print("Model xpath: ", model_xpath)
     val_seqs, labels, lbws, shaps, idx2lb, epochess, preds = joblib.load(model_xpath)
     shaps = np.squeeze(np.asarray(shaps))
@@ -106,7 +110,7 @@ if __name__ == "__main__":
     all_lbs = []
 
     for i in range(1999):
-        if i == 201 or i==len(preds):
+        if i == 201 or i == len(preds):
             break
         lb, pred = plot_id(i, show=False, out_dir=fig_dir)
         all_preds.append(pred)
@@ -115,8 +119,9 @@ if __name__ == "__main__":
     print(all_preds)
     from evals import get_confussion_from_list, plot_cfs_matrix
     from sklearn.metrics import precision_score, recall_score, f1_score
+
     cfs_matrix = get_confussion_from_list(all_lbs, all_preds, 6)
-    plot_cfs_matrix(cfs_matrix, False,out_dir=fig_dir)
+    plot_cfs_matrix(cfs_matrix, False, out_dir=fig_dir)
     mm = 'macro'
     pre = precision_score(all_lbs, all_preds, average=mm)
     rec = recall_score(all_lbs, all_preds, average=mm)

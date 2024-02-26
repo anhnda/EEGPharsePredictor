@@ -15,7 +15,7 @@ from get_model import get_model, TILE_SEQ, SIDE_FLAG, device
 import shap
 from shap import DeepExplainer, GradientExplainer
 from train import get_model_dirname
-
+import params
 from optparse import OptionParser
 import sys
 from train import parse_x
@@ -33,23 +33,28 @@ def xshap(model_id=1, test_id = 1):
     n_class = dataset.get_num_class()
     params.DID = MODEL_ID
     model = get_model(n_class).to(device)
-    model_dir = get_model_dirname()
     model_path = "%s/model_%s.pkl" % (get_model_dirname(), MODEL_ID)
     print("Model path: ", model_path)
     load_model(model, model_path)
     generator1 = torch.Generator().manual_seed(params.RD_SEED)
     train_dt, test_dt = random_split(dataset, [0.8, 0.2], generator=generator1)
-    train_dataloader = DataLoader(train_dt, batch_size=params.BATCH_SIZE * 2, num_workers=1, shuffle=True,
+    train_dataloader = DataLoader(train_dt, batch_size=params.BATCH_SIZE * 2, num_workers=0, shuffle=True,
                                   drop_last=True)
+    test_dataloader = DataLoader(test_dt, batch_size=1, num_workers=0, shuffle=True)
+
     samples, lb, _, _ = next(iter(train_dataloader))
+    # print(samples)
     if model.type == "Transformer":
         samples = samples.transpose(1, 0)
     else:
         samples = torch.unsqueeze(samples, 1)
+
     samples = samples.float().to(device)
+    # print("\nSample: ", samples.shape, samples[0,:,2,-100:])
+    # print(params.OFF_MOT)
+    # exit(-1)
     explainer = GradientExplainer(model, samples)
     #
-    test_dataloader = DataLoader(test_dt, batch_size=1, num_workers=0, shuffle=False)
     sm = torch.nn.Softmax(dim=-1)
     xs = []
     lbs = []
@@ -57,7 +62,7 @@ def xshap(model_id=1, test_id = 1):
     epoches = []
     shap_values = []
     ic = 0
-    MX = 202 # len(test_dataloader)
+    MX = 12 # len(test_dataloader)
     preds = []
     for _, data in tqdm(enumerate(test_dataloader)):
         ic += 1
@@ -74,7 +79,9 @@ def xshap(model_id=1, test_id = 1):
         pred = model(x)
         pred = sm(pred).detach().cpu()
         preds.append(pred)
+        # print("\nX", x.shape, x[:, :, 2, -100:])
         shap_v = explainer.shap_values(x)
+        # print("\nShap V: ", shap_v[0][:,:,2,-100:])
         xs.append(x)
         lbs.append(lb)
         lbws.append(lbw)

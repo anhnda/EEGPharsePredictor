@@ -53,7 +53,7 @@ def train():
     n_class = dataset.get_num_class()
     model = get_model(n_class)
     train_dt, test_dt = random_split(dataset, [0.8, 0.2], generator=generator1)
-    train_dataloader = DataLoader(train_dt, batch_size=params.BATCH_SIZE, num_workers=1, shuffle=True, drop_last=True)
+    train_dataloader = DataLoader(train_dt, batch_size=params.BATCH_SIZE, num_workers=0, shuffle=True, drop_last=True)
     test_dataloader = DataLoader(test_dt, batch_size=params.BATCH_SIZE, num_workers=0, shuffle=False)
     loss_function = torch.nn.CrossEntropyLoss(weight=CLASS_WEIGHT)
     loss_function2 = torch.nn.CrossEntropyLoss(weight=CLASS_WEIGHT2)

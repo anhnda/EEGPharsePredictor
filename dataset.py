@@ -63,6 +63,7 @@ class EGGDataset(Dataset):
             value_seq[1, :] = 0
         if params.OFF_MOT:
             value_seq[2, :] = 0
+        # print("VDS: ", params.OFF_MOT, value_seq[2,-100:])
         return value_seq
 
     def __getitem__(self, idx):
