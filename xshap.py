@@ -62,7 +62,7 @@ def xshap(model_id=1, test_id = 1):
     epoches = []
     shap_values = []
     ic = 0
-    MX = 12 # len(test_dataloader)
+    MX = 202 # len(test_dataloader)
     preds = []
     for _, data in tqdm(enumerate(test_dataloader)):
         ic += 1
