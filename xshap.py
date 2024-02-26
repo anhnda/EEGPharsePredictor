@@ -28,6 +28,7 @@ def xshap(model_id=1, test_id = 1):
     TEST_ID = test_id
     params.DID = TEST_ID
     print("Data info: DID: ", params.DID, get_dump_filename())
+    print(model_id, test_id)
     dataset = EGGDataset(tile_seq=TILE_SEQ, dump_path=get_dump_filename(), side_flag=SIDE_FLAG)
     n_class = dataset.get_num_class()
     params.DID = MODEL_ID
@@ -100,4 +101,5 @@ def xshap(model_id=1, test_id = 1):
 
 if __name__ == "__main__":
     parse_x()
+    print("ARG: ", params.TRAIN_ID, params.TEST_ID)
     xshap(params.TRAIN_ID, params.TEST_ID)

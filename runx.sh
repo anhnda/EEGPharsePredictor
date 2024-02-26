@@ -1,4 +1,4 @@
-python train.py   
+python train.py
 python xshap.py    --train=1  --test=1
 python visualization2.py    --train=1  --test=1
 python filter_figs.py    --train=1  --test=1

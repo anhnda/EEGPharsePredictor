@@ -38,7 +38,7 @@ def parse_x():
         params.OFF_MOT = True
     print(cmd_options, params.OFF_EGG, params.OFF_EMG, params.OFF_MOT, params.RD_SEED)
     params.TRAIN_ID = cmd_options.train
-    parser.TEST_ID = cmd_options.test
+    params.TEST_ID = cmd_options.test
 def train():
     torch.manual_seed(params.RD_SEED)
     generator1 = torch.Generator().manual_seed(params.RD_SEED)
