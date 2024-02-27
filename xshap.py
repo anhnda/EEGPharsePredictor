@@ -24,6 +24,9 @@ def load_model(model, path):
 
 
 def xshap(model_id=1, test_id = 1):
+    generator1 = torch.Generator().manual_seed(params.RD_SEED)
+    torch.random.manual_seed(params.RD_SEED)
+
     MODEL_ID = model_id
     TEST_ID = test_id
     params.DID = TEST_ID
@@ -36,7 +39,7 @@ def xshap(model_id=1, test_id = 1):
     model_path = "%s/model_%s.pkl" % (get_model_dirname(), MODEL_ID)
     print("Model path: ", model_path)
     load_model(model, model_path)
-    generator1 = torch.Generator().manual_seed(params.RD_SEED)
+
     train_dt, test_dt = random_split(dataset, [0.8, 0.2], generator=generator1)
     train_dataloader = DataLoader(train_dt, batch_size=params.BATCH_SIZE * 2, num_workers=0, shuffle=True,
                                   drop_last=True)
