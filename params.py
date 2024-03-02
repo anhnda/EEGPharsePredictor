@@ -39,6 +39,7 @@ CRITERIA = "F1X"
 OFF_EGG = False
 OFF_EMG = False
 OFF_MOT = False
+OUT_3C = True
 
 TRAIN_ID = 1
 TEST_ID = 1

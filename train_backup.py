@@ -18,7 +18,6 @@ CLASS_WEIGHT = None  # torch.tensor([2, 1, 0.1,  2, 2, 0.5, 0]).float().to(devic
 CLASS_WEIGHT2 = None  # torch.tensor([2, 1, 0.1,  2, 2, 0.5]).float()
 
 loss_function = torch.nn.CrossEntropyLoss(weight=CLASS_WEIGHT)
-loss_functionx = torch.nn.CrossEntropyLoss(weight=CLASS_WEIGHT, ignore_index=-1)
 
 
 def get_model_dirname():
@@ -47,14 +46,19 @@ def parse_x():
     params.TEST_ID = cmd_options.test
 
 
-def get_loss_c3(out, lws_array, device, w3=None):
+def get_loss_c3(c3_predictions, lws, device, w3=None):
     if w3 is None:
         w3 = [0.85, 1, 0.85]
-    target = lws_array.to(device)
+    out = c3_predictions.reshape(c3_predictions.shape[0], 3)
+    target = torch.zeros(out.shape).to(device)
+    # batch_size, dim_size, n_channels = out.shape
     loss = 0
     for i in range(3):
-
-        lossi = loss_functionx(out[:, :, i], target[:, :, i])
+        lbs = lws[:, i]
+        tps = [(j, lbs[j], i) for j in range(len(lbs))]
+        ids = tuple(np.transpose(tps))
+        target[ids] = 1
+        lossi = loss_function(out[:, :, i], target[:, :, i], ignore_index=-1)
         loss += w3[i] * lossi
     return loss
 
@@ -62,6 +66,7 @@ def get_loss_c3(out, lws_array, device, w3=None):
 def train():
     torch.manual_seed(params.RD_SEED)
     generator1 = torch.Generator().manual_seed(params.RD_SEED)
+
     model_dir = get_model_dirname()
     utils.ensureDir(model_dir)
 
@@ -86,7 +91,7 @@ def train():
         model.train()
         for it, data in enumerate(tqdm(train_dataloader)):
             optimizer.zero_grad()
-            x, lb, _, lbws_array, _ = data
+            x, lb, _, _ = data
             # print(x.shape, lb)
             # exit(-1)
             if model.type == "Transformer":
@@ -97,15 +102,11 @@ def train():
             # print("X in", x.shape)
             prediction = model(x)
             # print(lb.dtype, lb.shape, prediction.dtype, prediction.shape)
-            if params.OUT_3C:
-                loss = get_loss_c3(prediction, lbws_array, device)
-            else:
-                loss = loss_function(prediction, lb.to(device))
+            loss = loss_function(prediction, lb.to(device))
             loss.backward()
             # if it % 10 == 0:
             #     print(it, loss)
             optimizer.step()
-
         true_test = []
         predicted_test = []
         xs = []
@@ -115,7 +116,7 @@ def train():
         model.eval()
         itest = 0
         for _, data in tqdm(enumerate(test_dataloader)):
-            x, lb, _, lbws_array, _ = data
+            x, lb, lws, _ = data
             itest += 1
             # print("\r%s", itest, end="")
 
@@ -135,14 +136,9 @@ def train():
             true_test.append(lb.detach().cpu())
             # print("P S: ", prediction.shape)
             predicted_test.append(prediction.detach().cpu())
-
         # exit(-1)
         true_test = torch.concat(true_test, dim=0).detach().cpu()[:, :-1]
-        if params.OUT_3C:
-            predicted_test = torch.concat(predicted_test, dim=0).detach().cpu()[:, :-1, 1]
-        else:
-            predicted_test = torch.concat(predicted_test, dim=0).detach().cpu()[:, :-1]
-
+        predicted_test = torch.concat(predicted_test, dim=0).detach().cpu()[:, :-1]
         auc, aupr = roc_auc_score(true_test, predicted_test), average_precision_score(true_test, predicted_test)
         f1x = 2 * auc * aupr / (auc + aupr + 1e-10)
         test_loss = loss_function2(predicted_test, true_test)
@@ -176,6 +172,5 @@ def train():
 
 
 if __name__ == "__main__":
-    torch.autograd.set_detect_anomaly(True)
     parse_x()
     train()

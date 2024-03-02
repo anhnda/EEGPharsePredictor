@@ -9,6 +9,7 @@ from tqdm import tqdm
 import numpy as np
 import joblib
 from params import get_dump_filename
+
 params.DEVICE = "mps"
 
 from get_model import get_model, TILE_SEQ, SIDE_FLAG, device
@@ -19,11 +20,13 @@ import params
 from optparse import OptionParser
 import sys
 from train import parse_x
+
+
 def load_model(model, path):
     model.load_state_dict(torch.load(path))
 
 
-def xshap(model_id=1, test_id = 1):
+def xshap(model_id=1, test_id=1):
     generator1 = torch.Generator().manual_seed(params.RD_SEED)
     torch.random.manual_seed(params.RD_SEED)
 
@@ -35,7 +38,7 @@ def xshap(model_id=1, test_id = 1):
     dataset = EGGDataset(tile_seq=TILE_SEQ, dump_path=get_dump_filename(), side_flag=SIDE_FLAG)
     n_class = dataset.get_num_class()
     params.DID = MODEL_ID
-    model = get_model(n_class).to(device)
+    model = get_model(n_class, out_collapsed=not params.OUT_3C).to(device)
     model_path = "%s/model_%s.pkl" % (get_model_dirname(), MODEL_ID)
     print("Model path: ", model_path)
     load_model(model, model_path)
@@ -45,7 +48,7 @@ def xshap(model_id=1, test_id = 1):
                                   drop_last=True)
     test_dataloader = DataLoader(test_dt, batch_size=1, num_workers=0, shuffle=True)
 
-    samples, lb, _, _ = next(iter(train_dataloader))
+    samples, lb, _, _,_ = next(iter(train_dataloader))
     # print(samples)
     if model.type == "Transformer":
         samples = samples.transpose(1, 0)
@@ -65,13 +68,13 @@ def xshap(model_id=1, test_id = 1):
     epoches = []
     shap_values = []
     ic = 0
-    MX = 202 # len(test_dataloader)
+    MX = 202  # len(test_dataloader)
     preds = []
     for _, data in tqdm(enumerate(test_dataloader)):
         ic += 1
         if ic == MX - 1:
             break
-        x, lb, lbw, epoch_ids = data
+        x, lb, lbw, _, epoch_ids = data
 
         if model.type == "Transformer":
             x = x.transpose(1, 0)
@@ -80,6 +83,9 @@ def xshap(model_id=1, test_id = 1):
         x = x.float().to(device)
         # print("X in", x.shape)
         pred = model(x)
+        # print("Pred: ", pred.shape)
+        if params.OUT_3C:
+            pred = pred.reshape(pred.shape[0], -1, 3)[:, :, 1]
         pred = sm(pred).detach().cpu()
         preds.append(pred)
         # print("\nX", x.shape, x[:, :, 2, -100:])
@@ -89,6 +95,7 @@ def xshap(model_id=1, test_id = 1):
         lbs.append(lb)
         lbws.append(lbw)
         epoches.append(epoch_ids)
+        # print("Shap value shape: ", shap_v[0].shape)
         shap_values.append(shap_v)
         # print(prediction.shape, prediction)
         # exit(-1)
@@ -98,7 +105,8 @@ def xshap(model_id=1, test_id = 1):
             lbwss = torch.concat(lbws, dim=0).detach().cpu().numpy()
             epochess = torch.concat(epoches).detach().cpu().numpy()
             predss = torch.concat(preds, dim=0).numpy()
-            joblib.dump([xss, lbss, lbwss, shap_values, dataset.idx_2lb, epochess, predss], "%s/xmodel_%s_%s.pkl" % (get_model_dirname(), MODEL_ID, TEST_ID))
+            joblib.dump([xss, lbss, lbwss, shap_values, dataset.idx_2lb, epochess, predss],
+                        "%s/xmodel_%s_%s.pkl" % (get_model_dirname(), MODEL_ID, TEST_ID))
 
     xs = torch.concat(xs, dim=0).detach().cpu().numpy()
     lbs = torch.concat(lbs, dim=0).detach().cpu().numpy()
@@ -106,7 +114,8 @@ def xshap(model_id=1, test_id = 1):
     epochess = torch.concat(epoches).detach().cpu().numpy()
     predss = torch.concat(preds, dim=0).numpy()
 
-    joblib.dump([xs, lbs,lbws, shap_values,dataset.idx_2lb, epochess, predss], "%s/xmodel_%s_%s.pkl" % (get_model_dirname(), MODEL_ID, TEST_ID))
+    joblib.dump([xs, lbs, lbws, shap_values, dataset.idx_2lb, epochess, predss],
+                "%s/xmodel_%s_%s.pkl" % (get_model_dirname(), MODEL_ID, TEST_ID))
 
 
 if __name__ == "__main__":

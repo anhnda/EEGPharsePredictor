@@ -1,8 +1,11 @@
 from matplotlib import pyplot as plt
 import numpy as np
 import glob
-def load_data():
-    PATTERN = "out/M_*"
+
+
+def load_data(root_dir="outx"):
+    PATTERN = "%s/M_*" % root_dir
+
     def get_type(s):
         select = 1
         if s[3] == "F":
@@ -18,6 +21,7 @@ def load_data():
             if select:
                 channels.append(channel)
         return "+".join(channels)
+
     d_re = {}
     for folder_path in glob.glob(PATTERN):
         print(folder_path)
@@ -32,12 +36,13 @@ def load_data():
             d_re[channel] = [f1, auc, aupr]
     return d_re
 
+
 def plot():
     d_re = load_data()
     from utils import ensureDir
     ensureDir("figs")
     res = []
-    key_orders = ['EGG', 'EGG+EMG',  'EGG+MOT', 'EGG+EMG+MOT', 'EMG',  'MOT', 'EMG+MOT']
+    key_orders = ['EGG', 'EGG+EMG', 'EGG+MOT', 'EGG+EMG+MOT', 'EMG', 'MOT', 'EMG+MOT']
     LABELS = ["F1", "AUC", "AUPR"]
     for key in key_orders:
         values = d_re[key]
@@ -55,7 +60,38 @@ def plot():
     plt.savefig("figs/model_performances.png")
     plt.show()
 
+def plot2():
+    d_re = load_data(root_dir="out")
+    d_re2 = load_data(root_dir="outx")
+    from utils import ensureDir
+    ensureDir("figs")
+    res = []
+    resx = []
+    key_orders = ['EGG', 'EGG+EMG', 'EGG+MOT', 'EGG+EMG+MOT', 'EMG', 'MOT', 'EMG+MOT']
+    LABELS = ["F1X_3O", "AUC_3O", "AUPR_3O"]
+    LABELSX = ["F1X", "AUC", "AUPR"]
+
+    for key in key_orders:
+        values = d_re[key]
+        res.append(values)
+        valuesx = d_re2[key]
+        resx.append(valuesx)
+    ar = np.asarray(res)
+    arx = np.asarray(resx)
+    plt.figure()
+    for i in range(3):
+        y = ar[:, i]
+        print("Y", y)
+        plt.scatter(np.arange(len(key_orders)), y, label=LABELS[i])
+        yx = arx[:, i]
+        plt.scatter(np.arange(len(key_orders)), yx, label = LABELSX[i] )
+
+    plt.legend()
+    plt.xticks(np.arange(len(key_orders)), key_orders, rotation=45)
+    plt.title("Model Performances w.r.t. Channels")
+    plt.tight_layout()
+    plt.savefig("figs/model_performances_all.png")
+    plt.show()
+
 if __name__ == "__main__":
     plot()
-
-

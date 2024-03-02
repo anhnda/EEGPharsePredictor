@@ -98,5 +98,8 @@ class EGGDataset(Dataset):
         # print("Val seq", value_seq)
         # print("Lb ar", label_ar)
         # print("LB windows", torch.asarray(label_windows))
+        label_windows_array = np.zeros((self.num_class, len(label_windows)))
+        for i, v in enumerate(label_windows):
+            label_windows_array[v, i] = 1
 
-        return value_seq, label_ar, torch.asarray(label_windows), epoch_id
+        return value_seq, label_ar, torch.asarray(label_windows), torch.from_numpy(label_windows_array).float(), epoch_id

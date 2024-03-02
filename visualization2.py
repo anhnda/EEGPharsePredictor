@@ -76,9 +76,15 @@ def plot_id(idx, show=False, out_dir=None):
     # print(label)
     label_id = np.nonzero(label)[0][0]
     print("LB: ", label_id, label, lbw[1], lbw_names)
-    shs = shaps[idx][pred_id, :]
+    shs = shaps[idx]
+    if params.OUT_3C:
+        print(shs.shape)
+        shs = shs.reshape(params.NUM_CLASSES, 3,3, shs.shape[-1])[:, 1, :, :][pred_id, :]
+    else:
+        shs = shs[pred_id, :]
+    # print("Shape v x: ", shs.shape)
     shs = shs / np.max(np.abs(shs)) * 0.05
-    print()
+    # print()
     print(shs.shape, val.shape, np.max(shs))
     # print(label_id)
     name = "%sX_O_%s_T_%s_%s_P_%s_%s" % (idx + 1, epoch_id, label_id, idx2lb[label_id], pred_id, idx2lb[pred_id])

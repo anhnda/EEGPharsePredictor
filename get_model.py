@@ -4,6 +4,7 @@ from transformer_model import EGGPhrasePredictor
 from cnn_model import CNNModel
 # from cnn_model_2d import CNNModel2
 from cnn_model_3c import CNNModel3C
+from cnn_model_3c_3out import CNNModel3C3Out
 from fft_model import FFTModel
 from torch.utils.data import DataLoader
 from torch.utils.data import random_split
@@ -27,11 +28,14 @@ if model_type == "Transformer":
 
 
 
-def get_model(n_class):
+def get_model(n_class, out_collapsed=True):
     if model_type == "CNN":
         model = CNNModel(n_class=n_class, flag=SIDE_FLAG).to(device)
     elif model_type == "CNN3C":
-        model = CNNModel3C(n_class=n_class, flag=SIDE_FLAG).to(device)
+        if params.OUT_3C:
+            model = CNNModel3C3Out(n_class=n_class, flag=SIDE_FLAG, out_collapsed=out_collapsed).to(device)
+        else:
+            model = CNNModel3C(n_class=n_class, flag=SIDE_FLAG).to(device)
     elif model_type == "FFT":
         model = FFTModel(n_class=n_class).to(device)
     else:
