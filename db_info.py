@@ -9,9 +9,9 @@ import params
 import utils
 from train import get_model_dirname, parse_x
 
-CHANNEL_NAMES = ["EEG6", "EMG6", "MOT6"]
-
 sm = torch.nn.Softmax(dim=-1)
+
+CHANNEL_NAMES = ["EEG6", "EMG6", "MOT6"]
 
 
 def plot(value_seq, score_seq, name, show=True, out_dir=None):
@@ -74,20 +74,30 @@ def plot_id(idx, show=False, out_dir=None):
         else:
             lbw_names.append("PAD")
 
-
-
-
     prediction = preds[idx]
+
+
+    print("Prediction: ", prediction)
     pred_id = np.argmax(prediction)
+    pred_3o = preds_3os[idx]
 
-
+    if params.OUT_3C:
+        pred_pr = pred_3o[:, :, 0]
+        pred_af = pred_3o[:, :, 2]
+        pred_pr = sm(pred_pr).numpy()
+        pred_af = sm(pred_af).numpy()
+        pred_pr_id = np.argmax(pred_pr)
+        pred_af_id = np.argmax(pred_af)
+        print("All pred labels:", idx2lb[pred_pr_id], idx2lb[pred_id], idx2lb[pred_af_id])
     # print(label)
     label_id = np.nonzero(label)[0][0]
+    print(pred_id, label_id)
     print("LB: ", label_id, label, lbw[1], lbw_names)
     shs = shaps[idx]
+    return None
     if params.OUT_3C:
         print(shs.shape)
-        shs = shs.reshape(params.NUM_CLASSES, 3, 3, shs.shape[-1])[:, 1, :, :][pred_id, :]
+        shs = shs.reshape(params.NUM_CLASSES, 3,3, shs.shape[-1])[:, 1, :, :][pred_id, :]
     else:
         shs = shs[pred_id, :]
     # print("Shape v x: ", shs.shape)
@@ -106,9 +116,9 @@ def plot_id(idx, show=False, out_dir=None):
 
 if __name__ == "__main__":
     parse_x()
-    fig_dir = get_model_dirname() + "/figs/" + "%s" % params.TRAIN_ID + "_" + "%s" % params.TEST_ID
-    os.system("rm -rf %s/*" % fig_dir)
-    utils.ensureDir(fig_dir)
+    # fig_dir = get_model_dirname() + "/figs/" + "%s" % params.TRAIN_ID + "_" + "%s" % params.TEST_ID
+    # os.system("rm -rf %s/*" % fig_dir)
+    # utils.ensureDir(fig_dir)
 
     MODEL_ID = params.TRAIN_ID
     TEST_ID = params.TEST_ID
@@ -123,8 +133,17 @@ if __name__ == "__main__":
     all_preds = []
     all_lbs = []
 
+    while True:
+        idx = int(input("Enter Test Index: "))
+        if idx == -1:
+            print("Exit")
+            exit(-1)
+        idx = idx - 1
+        plot_id(idx, show=False)
+    exit(-1)
+
     for i in range(1999):
-        if i == 20001 or i == len(preds):
+        if i == 201 or i == len(preds):
             break
         lb, pred = plot_id(i, show=False, out_dir=fig_dir)
         all_preds.append(pred)
