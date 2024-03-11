@@ -95,9 +95,12 @@ def plot_id(idx, show=False, out_dir=None):
     print("LB: ", label_id, label, lbw[1], lbw_names)
     shs = shaps[idx]
     return None
+    nc = 3
+    if params.TWO_CHAINS:
+        nc = 2
     if params.OUT_3C:
         print(shs.shape)
-        shs = shs.reshape(params.NUM_CLASSES, 3,3, shs.shape[-1])[:, 1, :, :][pred_id, :]
+        shs = shs.reshape(params.NUM_CLASSES, nc,3, shs.shape[-1])[:, 1, :, :][pred_id, :]
     else:
         shs = shs[pred_id, :]
     # print("Shape v x: ", shs.shape)
@@ -106,8 +109,8 @@ def plot_id(idx, show=False, out_dir=None):
     print(shs.shape, val.shape, np.max(shs))
     # print(label_id)
     name = "%sX_O_%s_T_%s_%s_P_%s_%s" % (idx + 1, epoch_id, label_id, idx2lb[label_id], pred_id, idx2lb[pred_id])
-    if params.THREE_CHAINS:
-        plot3c(val, shs, name, lbw_names, show=show, out_dir=out_dir)
+    if params.THREE_CHAINS or params.TWO_CHAINS:
+        plot3c(val, shs, name, lbw_names, n_channels=nc, show=show, out_dir=out_dir)
     else:
         plot(val, shs, name, show=show)
 

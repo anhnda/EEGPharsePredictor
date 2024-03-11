@@ -43,13 +43,14 @@ def xshap(model_id=1, test_id=1):
     print("Model path: ", model_path)
     load_model(model, model_path)
 
-    train_dt, test_dt = get_train_test_all()
-    # train_dt, test_dt = random_split(dataset, [0.8, 0.2], generator=generator1)
+    train_dt, test_dt,_ = get_train_test_all()
+
     train_dataloader = DataLoader(train_dt, batch_size=params.BATCH_SIZE * 2, num_workers=0, shuffle=True,
                                   drop_last=True)
-    test_dataloader = DataLoader(test_dt, batch_size=1, num_workers=0, shuffle=True)
-
     samples, lb, _, _,_ = next(iter(train_dataloader))
+
+
+    test_dataloader = DataLoader(test_dt, batch_size=1, num_workers=0, shuffle=True)
     # print(samples)
     if model.type == "Transformer":
         samples = samples.transpose(1, 0)
@@ -73,6 +74,7 @@ def xshap(model_id=1, test_id=1):
     MX = 1002  # len(test_dataloader)
     preds = []
     preds_3o = []
+
     for _, data in tqdm(enumerate(test_dataloader)):
         ic += 1
         if ic == MX - 1:
@@ -83,6 +85,7 @@ def xshap(model_id=1, test_id=1):
             x = x.transpose(1, 0)
         else:
             x = torch.unsqueeze(x, 1)
+
         x = x.float().to(device)
         # print("X in", x.shape)
         pred = model(x)

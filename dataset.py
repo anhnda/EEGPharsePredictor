@@ -20,6 +20,8 @@ class EGGDataset(Dataset):
         # print(len(value_seqs), len(value_seqs[0]), len(value_seqs[0][7786]), len(value_seqs[1][7786]), len(value_seqs[2][7786]), len(label_seqs))
         self.value_seqs = value_seqs
         self.mx = np.asarray(mx)[:, np.newaxis]
+        if params.TWO_CHAINS:
+            self.mx = self.mx[:2, :]
         print(self.mx)
         self.label_seqs = label_seqs
         self.lb_dict = lb_dict
@@ -47,12 +49,17 @@ class EGGDataset(Dataset):
         if idx < 0 or idx >= self.__len__():
             if params.THREE_CHAINS:
                 value_seq = np.zeros((3, params.MAX_SEQ_SIZE))
+            elif params.TWO_CHAINS:
+                value_seq = np.zeros((2, params.MAX_SEQ_SIZE))
             else:
                 value_seq = np.zeros(params.MAX_SEQ_SIZE)
         else:
             if params.THREE_CHAINS:
                 value_seq = np.asarray(
                     [self.value_seqs[0][idx], self.value_seqs[1][idx], self.value_seqs[2][idx]]) / self.mx
+            elif params.TWO_CHAINS:
+                value_seq = np.asarray(
+                    [self.value_seqs[0][idx], self.value_seqs[1][idx]]) / self.mx
             else:
                 value_seq = np.asarray(self.value_seqs[0][idx]) / self.mx
 
@@ -61,14 +68,14 @@ class EGGDataset(Dataset):
             value_seq[0, :] = 0
         if params.OFF_EMG:
             value_seq[1, :] = 0
-        if params.OFF_MOT:
+        if params.OFF_MOT and not params.TWO_CHAINS:
             value_seq[2, :] = 0
         # print("VDS: ", params.OFF_MOT, value_seq[2,-100:])
         return value_seq
 
     def __getitem__(self, idx):
         value_seq = self.__getseq_idx(idx)
-        if params.THREE_CHAINS:
+        if params.THREE_CHAINS or params.TWO_CHAINS:
             assert len(value_seq[0]) == params.MAX_SEQ_SIZE
             # value_seq[2].fill(0)
         else:
@@ -102,4 +109,5 @@ class EGGDataset(Dataset):
         for i, v in enumerate(label_windows):
             label_windows_array[v, i] = 1
 
-        return value_seq, label_ar, torch.asarray(label_windows), torch.from_numpy(label_windows_array).float(), epoch_id
+        return value_seq, label_ar, torch.asarray(label_windows), torch.from_numpy(
+            label_windows_array).float(), epoch_id

@@ -72,7 +72,7 @@ def get_train_test_all():
 
     train_dt = torch.utils.data.ConcatDataset(train_dts)
     test_dt = torch.utils.data.ConcatDataset(test_dts)
-    return train_dt, test_dt
+    return train_dt, test_dt, dataset.idx_2lb
 def train():
 
     model_dir = get_model_dirname()
@@ -84,7 +84,7 @@ def train():
 
     n_class = params.NUM_CLASSES
     model = get_model(n_class)
-    train_dt, test_dt = get_train_test_all()
+    train_dt, test_dt, idx_2lb = get_train_test_all()
 
     train_dataloader = DataLoader(train_dt, batch_size=params.BATCH_SIZE, num_workers=0, shuffle=True, drop_last=True)
     test_dataloader = DataLoader(test_dt, batch_size=params.BATCH_SIZE, num_workers=0, shuffle=False)
@@ -179,7 +179,7 @@ def train():
                 # lbs = torch.concat(lbs, dim=0).detach().cpu().numpy()
                 # lbws = torch.concat(lbws, dim=0).detach().cpu().numpy()
                 np.savetxt("%s/true.txt" % (get_model_dirname()), true_test, fmt="%d")
-                joblib.dump([xs, lbs, lbws, dataset.idx_2lb], "%s/test_data.pkl" % get_model_dirname())
+                joblib.dump([xs, lbs, lbws, idx_2lb], "%s/test_data.pkl" % get_model_dirname())
                 is_first_test = False
         logger.infoAll(("Error Test: ", params.CRITERIA, test_loss, math.fabs(test_loss2), math.fabs(min_test_loss)
                         , epoch_id, min_id, auc, aupr))
