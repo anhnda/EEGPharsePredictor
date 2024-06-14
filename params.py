@@ -1,7 +1,7 @@
 DID = 1
 DATA_DIR = "./EEG_test_files-2"
-SEQUENCE_FILE = "%s/ELES_K3_EEG3_SAL_11h.txt" % DATA_DIR
-LABEL_FILE = "%s/ELES_20211002_K3_EEG3_10775-fenyvaltasig-PN_OK másolata_cFFT_11h_P.txt" % DATA_DIR
+SEQUENCE_FILE = "%s/raw_K3_EEG3_11h.txt" % DATA_DIR
+LABEL_FILE = "%s/K3_EEG3_11h.txt" % DATA_DIR
 DUMP_FILE = "%s/dump_egg_%s.pkl" % (DATA_DIR, DID)
 DUMP_FILE_PATTERN = "%s/dump_egg_" % DATA_DIR + "%s.pkl"
 #
@@ -17,6 +17,7 @@ DUMP_FILE_PATTERN = "%s/dump_egg_" % DATA_DIR + "%s.pkl"
 # SEQUENCE_FILE = "%s/raw_RS2_EEG1_23 hr.txt" % DATA_DIR
 # LABEL_FILE = "%s/RS2_EEG1_23 hr.txt" % DATA_DIR
 # DUMP_FILE = "%s/dump_egg_%s.pkl" % (DATA_DIR, DID)
+
 W_DIR = "."
 NUM_CLASSES = 7
 
