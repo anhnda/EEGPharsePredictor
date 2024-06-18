@@ -31,13 +31,19 @@ def get_insert_dict_index(d, k):
     return v
 
 def convert_time(time_string, offset=946659600000):
+    FORMAT1 = '%Y.%m.%d.  %H:%M:%S.%f'
+    FORMAT11 = '%Y.%m.%d.  %H:%M:%S'
+    if time_string.__contains__("/"):
+        FORMAT1 =  '%m/%d/%Y  %H:%M:%S.%f'
+        FORMAT11 = '%m/%d/%Y  %H:%M:%S.%f'
+
     try:
         if time_string[-5:].__contains__("."):
             dt_obj = datetime.strptime(time_string,
-                                   '%Y.%m.%d.  %H:%M:%S.%f')
+                                   FORMAT1)
         else:
             dt_obj = datetime.strptime(time_string,
-                                   '%Y.%m.%d.  %H:%M:%S')
+                                   FORMAT11)
 
         millisec = int(dt_obj.timestamp() * 1000) - offset
     except:

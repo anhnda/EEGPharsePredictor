@@ -1,7 +1,7 @@
 datasets:
   time_step: 4000 #milliseconds
-  data_dir: "/Users/anhnd/CodingSpace/Python/EEGPharsePredictor/EEG_test_files-2"
+  data_dir: "/Users/anhnd/CodingSpace/Python/W"
   tmp_dir : "/Users/anhnd/CodingSpace/Python/W"
-  out_dir: "/Users/anhnd/CodingSpace/Python/EEGPharsePredictor/EEG_test_files-2"
-  seq_files: ["raw_K3_EEG3_11h.txt", "raw_RS2_EEG1_23 hr.txt", "raw_S1_EEG1_23 hr.txt"]
+  out_dir: "/Users/anhnd/CodingSpace/Python/W"
+  seq_files: ["BLK4_EEG4_SAL.csv"]
   out_seperator: "\t"

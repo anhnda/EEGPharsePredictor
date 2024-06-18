@@ -1,7 +1,7 @@
 import math
 import os.path
 from optparse import OptionParser
-
+from pathlib import Path
 from . import params
 from . import utils
 from .dataset import EGGDataset
@@ -66,7 +66,8 @@ def get_dataset():
     utils.ensureDir(TMP_DIR)
     utils.ensureDir(OUT_DIR)
     for i in range(len(config["datasets"]["seq_files"])):
-        full_dump_path = os.path.join(TMP_DIR, config["datasets"]["seq_files"][i]).replace(".txt", ".pkl")
+        # full_dump_path = os.path.join(TMP_DIR, config["datasets"]["seq_files"][i]).replace(".txt", ".pkl")
+        full_dump_path = Path(os.path.join(TMP_DIR, config["datasets"]["seq_files"][i])).with_suffix(".pkl")
         full_seq_path = os.path.join(DATA_DIR, config["datasets"]["seq_files"][i])
         print("Loading {}".format(full_dump_path))
         if not os.path.exists(full_dump_path):
@@ -107,13 +108,16 @@ def infer(opts=None,fft=True):
         predicted_test = []
         ffts = []
         model.eval()
-        for _, data in tqdm(enumerate(dataloader)):
+        for ii, data in tqdm(enumerate(dataloader)):
             x, lbnamelb, _, lbws_array, _ = data
-
             if fft:
                 s = x.detach().numpy()[:, 0, params.MAX_SEQ_SIZE: 2*params.MAX_SEQ_SIZE]
-                r = utils.get_fft(s*infer_ds.misc["mxs"][0])
+                si = s*infer_ds.misc["mxs"][0]
+                r = utils.get_fft(si)
+
                 ffts.append(r)
+                # if (ii%20==0 and ii>100):
+                #     print(infer_ds.misc["TIME_ANCHORS"][ii*10], si[:, :10])
 
             if model.type == "Transformer":
                 x = x.transpose(1, 0)

@@ -54,6 +54,7 @@ def load_labels(inp):
     return labels, times, LB_DICT
 
 def load_seq_data_only(inp, step=4000):
+    global SEP_CHECKED, SEPERATOR
     fin = open(inp, encoding='utf-8', errors='ignore')
     misc = {}
     misc["BASE_NAME"] = Path(inp).stem
@@ -64,6 +65,7 @@ def load_seq_data_only(inp, step=4000):
             break
         if line.startswith(SEQ_MARKER):
             break
+
         headers.append(line)
 
     mx1, mx2, mx3 = -10000, -10000, -10000
@@ -81,7 +83,13 @@ def load_seq_data_only(inp, step=4000):
             print("\r%s" % ic, end="")
         if line == "":
             break
-        parts = line.split("\t")
+        if ic == 1 or not SEP_CHECKED:
+            if line.__contains__(","):
+                SEPERATOR = ","
+                print("Sep: commas,")
+            SEP_CHECKED = True
+        line = line.strip()
+        parts = line.split(SEPERATOR)
         time_text = parts[0]
 
         value_texts = parts[1:4]
@@ -89,6 +97,7 @@ def load_seq_data_only(inp, step=4000):
         if time_v >= ctime + step:
             if ctime == -1:
                 for i, value_text in enumerate(value_texts):
+
                     v = float(value_text)
                     if abs(v) > mxs[i]:
                         mxs[i] = abs(v)
@@ -105,6 +114,7 @@ def load_seq_data_only(inp, step=4000):
 
 
         for i, value_text in enumerate(value_texts):
+
             v = float(value_text)
             if abs(v) > mxs[i]:
                 mxs[i] = abs(v)

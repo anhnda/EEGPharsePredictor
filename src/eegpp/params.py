@@ -1,5 +1,5 @@
 import os
-DATA_CONFIG_PATH = "data_config_infer.yml"
+DATA_CONFIG_PATH = "data_config_infer2.yml"
 DATA_DIR = None
 DUMP_FILE_PATTERN = None
 W_DIR = "."
