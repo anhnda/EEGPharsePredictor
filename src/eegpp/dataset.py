@@ -1,14 +1,13 @@
 import numpy as np
 from torch.utils.data import Dataset, DataLoader
 import torch
-from torch import nn
-import params
 import joblib
-import math
+
+from .import params
 
 
 class EGGDataset(Dataset):
-    def __init__(self, dump_path=params.DUMP_FILE, tile_seq=False, cls_pad=True, side_flag=False):
+    def __init__(self, dump_path=None, tile_seq=False, cls_pad=True, side_flag=False, with_label=True):
         """
         Arguments:
             csv_file (string): Path to the csv file with annotations.
@@ -16,13 +15,21 @@ class EGGDataset(Dataset):
             transform (callable, optional): Optional transform to be applied
                 on a sample.
         """
-        value_seqs, label_seqs, mx, lb_dict = joblib.load(dump_path)
+        self.with_label = with_label
+        self.dump_path = dump_path
+        if self.with_label:
+            value_seqs, label_seqs, mx, misc = joblib.load(dump_path)
+        else:
+            value_seqs, mx, misc = joblib.load(dump_path)
+            label_seqs = []
+        lb_dict = misc["LB_DICT"]
+        self.misc = misc
         # print(len(value_seqs), len(value_seqs[0]), len(value_seqs[0][7786]), len(value_seqs[1][7786]), len(value_seqs[2][7786]), len(label_seqs))
         self.value_seqs = value_seqs
         self.mx = np.asarray(mx)[:, np.newaxis]
         if params.TWO_CHAINS:
             self.mx = self.mx[:2, :]
-        print(self.mx)
+        # print(self.mx)
         self.label_seqs = label_seqs
         self.lb_dict = lb_dict
         self.idx_2lb = {v: k for k, v in lb_dict.items()}
@@ -34,12 +41,14 @@ class EGGDataset(Dataset):
         self.side_flag = side_flag
 
     def __len__(self):
-        return len(self.label_seqs)
+        return len(self.value_seqs[0])
 
     def get_num_class(self):
         return self.num_class
 
     def __getlb_idx(self, idx):
+        if not self.with_label:
+            return [-1,-1]
         if idx < 0 or idx >= self.__len__():
             return [-1, -1]
         return self.label_seqs[idx]
@@ -80,12 +89,14 @@ class EGGDataset(Dataset):
             # value_seq[2].fill(0)
         else:
             assert len(value_seq) == params.MAX_SEQ_SIZE
-        label_id, epoch_id = self.label_seqs[idx]
-        # print("EID", epoch_id, label_id)
+        if self.with_label:
+            label_id, epoch_id = self.label_seqs[idx]
+        else:
+            epoch_id = idx
+            label_id = 0
         label_ar = torch.zeros(self.num_class)
         label_ar[label_id] = 1
         label_windows = [label_id]
-        # print("Val Seq: ", value_seq.shape)
         if self.tile_seq:
             value_seq = torch.tile(torch.from_numpy(np.asarray(value_seq)) / self.mx, (params.D_MODEL, 1))
             if self.cls_pad:
@@ -102,9 +113,8 @@ class EGGDataset(Dataset):
                 value_seq_left = self.__getseq_idx(idx - 1)
                 value_seq = torch.concat((value_seq_left, value_seq), dim=-1)
                 label_windows = [label_id, self.__getlb_idx(idx + 1)[0]]
-        # print("Val seq", value_seq)
-        # print("Lb ar", label_ar)
-        # print("LB windows", torch.asarray(label_windows))
+
+
         label_windows_array = np.zeros((self.num_class, len(label_windows)))
         for i, v in enumerate(label_windows):
             label_windows_array[v, i] = 1

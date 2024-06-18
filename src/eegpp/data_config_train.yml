@@ -1,0 +1,6 @@
+datasets:
+  data_dir: "/Users/anhnd/CodingSpace/Python/EEGPharsePredictor/EEG_test_files-2"
+  seq_files: ["raw_K3_EEG3_11h.txt", "raw_RS2_EEG1_23 hr.txt", "raw_S1_EEG1_23 hr.txt"]
+  label_files: ["K3_EEG3_11h.txt", "RS2_EEG1_23 hr.txt", "S1_EEG1_23 hr.txt"]
+  dump_files: ["dump_eeg_1.pkl", "dump_eeg_2.pkl", "dump_eeg_3.pkl"]
+  dump_file_pattern: "/Users/anhnd/CodingSpace/Python/EEGPharsePredictor/EEG_test_files-2/dump_eeg_%s.pkl"

@@ -1,8 +1,6 @@
 import torch
 from torch import nn
-from torch.nn import MaxPool1d
 
-import params
 
 
 class MNAPooling(nn.Module):

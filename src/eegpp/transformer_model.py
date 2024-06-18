@@ -2,7 +2,7 @@ from torch import nn
 import torch
 import math
 
-import params
+from .import params
 
 
 class PositionalEncoding(nn.Module):

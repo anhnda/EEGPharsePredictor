@@ -1,8 +1,6 @@
 import torch
 from torch import nn
-from torch.nn import MaxPool1d
 
-import params
 
 
 class MNAPooling(nn.Module):
@@ -32,16 +30,17 @@ def get_dim(dim, flag):
     return dim * flag
 
 
-class CNNModel3C(nn.Module):
-    def __init__(self, n_class, n_base=16, flag=1, n_conv=8):
+class CNNModel3C3Out(nn.Module):
+    def __init__(self, n_class, n_base=16, flag=1, out_collapsed=True, n_conv=8):
         super().__init__()
         self.n_class = n_class
-        self.type = "CNN3C"
+        self.type = "CNN3C_Out"
         self.flag = flag
         self.chain1_layers = nn.ModuleList()
         self.chain2_layers = nn.ModuleList()
         self.chain3_layers = nn.ModuleList()
         self.chains = [self.chain1_layers, self.chain2_layers, self.chain3_layers]
+        self.out_collapsed = out_collapsed
         base_dim = 1536
 
         for i in range(3):
@@ -88,7 +87,7 @@ class CNNModel3C(nn.Module):
 
             # self.fc1 = nn.Sequential(nn.Dropout(0.1), nn.Linear(768, 320), nn.ReLU())
 
-        self.fc2 = nn.Sequential(nn.Linear(320 * 3, n_class))
+        self.fc2 = nn.Sequential(nn.Linear(320 * 3, n_class * 3))
 
     def forward(self, x):
         # print("X", x.shape)
@@ -105,5 +104,7 @@ class CNNModel3C(nn.Module):
                     xis.append(xi)
         out = torch.concat(xis, dim=-1)
         out = self.fc2(out)
+        if self.out_collapsed:
+            out = out.reshape((out.shape[0], -1, 3))
 
         return out

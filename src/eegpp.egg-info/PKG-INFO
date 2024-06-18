@@ -1,3 +1,23 @@
+Metadata-Version: 2.1
+Name: eegpp
+Version: 1.2.1
+Summary: EEG Phrase Predictor
+Author-email: AnhND <anh.nguyenduc@hust.edu.vn>
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.9
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: torch>=2.3.0
+Requires-Dist: torchvision>=0.15.2
+Requires-Dist: numpy>=1.26.4
+Requires-Dist: tqdm<5,>=4.66.2
+Requires-Dist: pyyaml>=6.0.1
+Requires-Dist: scikit-learn<2,>=1.4.2
+Requires-Dist: scipy<2,>=1.13.0
+Requires-Dist: joblib<2,>=1.4.0
+
 # EEG Phrase Predictor
 
 ## Setup

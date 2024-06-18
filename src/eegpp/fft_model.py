@@ -1,7 +1,5 @@
 import torch
-from torch import nn
-from torch.nn import MaxPool1d
-import params
+from . import params
 class FFTModel(torch.nn.Module):
     def __init__(self, n_class):
         super().__init__()

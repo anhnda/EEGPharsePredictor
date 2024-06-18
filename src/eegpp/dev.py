@@ -3,7 +3,7 @@ import os
 
 C_DIR = os.path.dirname(os.path.abspath(__file__))
 
-device1 = torch.device("mps")
+device1 = None
 if torch.backends.mps.is_available():
     device0 = torch.device("mps")
 elif torch.cuda.is_available():

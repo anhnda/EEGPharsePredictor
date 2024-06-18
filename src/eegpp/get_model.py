@@ -1,21 +1,12 @@
-import params
-from dataset import EGGDataset
-from transformer_model import EGGPhrasePredictor
-from cnn_model import CNNModel
+from .transformer_model import EGGPhrasePredictor
+from .cnn_model import CNNModel
 # from cnn_model_2d import CNNModel2
-from cnn_model_3c import CNNModel3C
-from cnn_model_2c_3out import CNNModel2C3Out
-from cnn_model_3c_3out import CNNModel3C3Out
-from fft_model import FFTModel
-from torch.utils.data import DataLoader
-from torch.utils.data import random_split
-from sklearn.metrics import roc_auc_score, average_precision_score
-import params
-import torch
-from tqdm import tqdm
-from dev import get_device
-import numpy as np
-import joblib
+from .cnn_model_3c import CNNModel3C
+from .cnn_model_2c_3out import CNNModel2C3Out
+from .cnn_model_3c_3out import CNNModel3C3Out
+from .fft_model import FFTModel
+from . import params
+from .dev import get_device
 
 device = get_device(params.DEVICE)
 model_type = params.MODE_TYPE
@@ -27,10 +18,8 @@ if model_type == "Transformer":
     TILE_SEQ = True
 
 
-
-
 def get_model(n_class, out_collapsed=True):
-    print("Get model ", model_type, " ...")
+    print("Initializing model ...")
     if model_type == "CNN":
         model = CNNModel(n_class=n_class, flag=SIDE_FLAG).to(device)
 
