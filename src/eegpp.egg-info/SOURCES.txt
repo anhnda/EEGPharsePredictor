@@ -24,6 +24,7 @@ src/eegpp/main.py
 src/eegpp/model_1.pkl
 src/eegpp/params.py
 src/eegpp/plot_re_channels.py
+src/eegpp/post_processing.py
 src/eegpp/train.py
 src/eegpp/train_all_data.py
 src/eegpp/train_backup.py

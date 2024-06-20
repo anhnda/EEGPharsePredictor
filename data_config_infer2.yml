@@ -3,5 +3,5 @@ datasets:
   data_dir: "/Users/anhnd/CodingSpace/Python/W"
   tmp_dir : "/Users/anhnd/CodingSpace/Python/W"
   out_dir: "/Users/anhnd/CodingSpace/Python/W"
-  seq_files: ["BLK4_EEG4_SAL.csv"]
+  seq_files: ["K2_EEG1_S-KET.csv"]
   out_seperator: "\t"

@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: eegpp
-Version: 1.3.1
+Version: 1.4.1
 Summary: EEG Phrase Predictor
 Author-email: AnhND <anh.nguyenduc@hust.edu.vn>
 Classifier: Programming Language :: Python :: 3
@@ -57,10 +57,10 @@ datasets:
 Command:
 
 ```
-    python -m eegpp -p PATH_TO_THE_YML_CONFIG_FILE -e
+    python -m eegpp -p PATH_TO_THE_YML_CONFIG_FILE -e -t 0.55 {-n for norule}
 ```
 e.g.
 
 ```
-    python -m eegpp -p data_config_infer.yml -e
+    python -m eegpp -p data_config_infer.yml -e -t 0.55
 ```

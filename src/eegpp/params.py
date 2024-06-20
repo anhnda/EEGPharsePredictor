@@ -37,3 +37,6 @@ C_DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_PATH = "%s/model_1.pkl" % C_DIR
 TRAIN_ID = 1
 TEST_ID = 1
+
+STAR_THRESHOLD = 0.55
+RULE = True

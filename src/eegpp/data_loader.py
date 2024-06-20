@@ -119,11 +119,12 @@ def load_seq_data_only(inp, step=4000):
             if abs(v) > mxs[i]:
                 mxs[i] = abs(v)
             c_seqs[i].append(v)
-
+    print("\nLast time text: ", time_text, time_anchors[-1])
     misc["TIME_ANCHORS"] = time_anchors
     misc["HEADER"] = "".join(headers) + header_lb.HEADER_2
     misc["LB_DICT"] = LB_DICT
     misc["mxs"] = mxs
+    print("\nFinal Length: ", len(value_seqs[0]), len(misc["TIME_ANCHORS"]))
     return value_seqs, mxs, misc
 
 

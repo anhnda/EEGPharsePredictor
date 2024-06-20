@@ -13,7 +13,7 @@ from tqdm import tqdm
 import numpy as np
 import joblib
 from .get_model import get_model, TILE_SEQ, SIDE_FLAG, device
-
+from .post_processing import correct_star, correct_4wr
 CLASS_WEIGHT = None  # torch.tensor([2, 1, 0.1,  2, 2, 0.5, 0]).float().to(device)
 CLASS_WEIGHT2 = None  # torch.tensor([2, 1, 0.1,  2, 2, 0.5]).float()
 
@@ -37,10 +37,15 @@ def parse_x():
 
     parser.add_option("-p", "--path", dest="path", type='string', default="None", help="yaml config file")
     parser.add_option("-e", "--clean", dest="clean", action="store_true", help="store tmp file")
+    parser.add_option("-t", "--threshold", dest="threshold", type='float', default=params.STAR_THRESHOLD)
+    parser.add_option("-n", "--norule", dest="norule", action="store_true")
 
     (cmd_options, args) = parser.parse_args()
+    params.STAR_THRESHOLD = cmd_options.threshold
 
     params.OFF_MOT = True
+    if cmd_options.norule:
+        params.RULE = False
     if cmd_options.path != "None":
         params.DATA_CONFIG_PATH = cmd_options.path
     # print(cmd_options, params.OFF_EGG, params.OFF_EMG, params.OFF_MOT, params.RD_SEED)
@@ -97,9 +102,11 @@ def infer(opts=None,fft=True):
 
     datasets = get_dataset()
     for i, ds in enumerate(datasets):
-        print("\nInterring...")
+        print("Interring...")
         i = i + 1
         infer_ds, idx_2lb = ds
+        print("Last time: %s\n" % infer_ds.misc["TIME_ANCHORS"][-1])
+
         BASE_NAME = infer_ds.misc["BASE_NAME"]
         dataloader = DataLoader(infer_ds, batch_size=params.BATCH_SIZE, num_workers=0, shuffle=False, drop_last=False)
 
@@ -135,12 +142,14 @@ def infer(opts=None,fft=True):
 
         ss = sm(predicted_test)
         np.savetxt("%s/%s_SCORES.txt" % (OUT_DIR, BASE_NAME), ss, fmt="%.4f")
-        predicted_lbids = np.argmax(ss.numpy(), axis=-1)
+        # predicted_lbids = np.argmax(ss.numpy(), axis=-1)
+        predicted_lbids = correct_star(ss.numpy(), params.STAR_THRESHOLD)
+        if params.RULE:
+            correct_4wr(predicted_lbids)
         predicted_lbs = []
         for lb_id in predicted_lbids:
             predicted_lbs.append(idx_2lb[lb_id])
         fout = open("%s/%s_LBTEXT.txt" % (OUT_DIR, BASE_NAME), "w")
-
         for lbname in predicted_lbs:
             fout.write("%s\n" % lbname)
         fout.close()
@@ -155,6 +164,7 @@ def infer(opts=None,fft=True):
             os.remove(infer_ds.dump_path)
 def infer_cmd():
     opts = parse_x()
+    print(opts)
     infer(opts=opts)
 if __name__ == "__main__":
     # torch.autograd.set_detect_anomaly(True)

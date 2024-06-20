@@ -37,10 +37,10 @@ datasets:
 Command:
 
 ```
-    python -m eegpp -p PATH_TO_THE_YML_CONFIG_FILE -e
+    python -m eegpp -p PATH_TO_THE_YML_CONFIG_FILE -e -t 0.55 {-n for norule}
 ```
 e.g.
 
 ```
-    python -m eegpp -p data_config_infer.yml -e
+    python -m eegpp -p data_config_infer.yml -e -t 0.55
 ```
