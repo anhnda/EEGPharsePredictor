@@ -4,7 +4,7 @@ pyproject.toml
 src/eegpp/__init__.py
 src/eegpp/__main__.py
 src/eegpp/cnn_model.py
-src/eegpp/cnn_model_2c_3out.py
+src/eegpp/cnn_model_2c_Wout.py
 src/eegpp/cnn_model_2d.py
 src/eegpp/cnn_model_3c.py
 src/eegpp/cnn_model_3c_3out.py

@@ -1,7 +1,0 @@
-datasets:
-  time_step: 4000 #milliseconds
-  data_dir: "/Users/anhnd/CodingSpace/Python/W"
-  tmp_dir : "/Users/anhnd/CodingSpace/Python/W"
-  out_dir: "/Users/anhnd/CodingSpace/Python/W"
-  seq_files: ["BLK4_EEG4_SAL.csv"]
-  out_seperator: "\t"

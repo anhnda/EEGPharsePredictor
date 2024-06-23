@@ -103,16 +103,29 @@ class EGGDataset(Dataset):
                 value_seq = torch.hstack([self.cls, value_seq]).transpose(0, 1)
         else:
             if self.side_flag == params.TWO_SIDE:
-                value_seq_left = self.__getseq_idx(idx - 1)
-                value_seq_right = self.__getseq_idx(idx + 1)
-                value_seq = torch.concat((value_seq_left, value_seq, value_seq_right), dim=-1)
+                value_seqs = []
+                label_windows = []
+                # Left
+                for ii in range(params.POS_ID, 0, -1):
+                    value_seqs.append(self.__getseq_idx(idx-ii))
+                    label_windows.append(self.__getlb_idx(idx-ii)[0])
+                # Main mid
+                value_seqs.append(value_seq)
+                label_windows.append(label_id)
+                # Right
+                for ii in range(1, params.POS_ID+1):
+                    value_seqs.append(self.__getseq_idx(idx+ii))
+                    label_windows.append(self.__getlb_idx(idx + ii)[0])
 
-                label_windows = [self.__getlb_idx(idx - 1)[0], label_id, self.__getlb_idx(idx + 1)[0]]
+                value_seq = torch.concat(value_seqs, dim=-1)
+
+
+
             elif self.side_flag == params.LEFT:
-
-                value_seq_left = self.__getseq_idx(idx - 1)
-                value_seq = torch.concat((value_seq_left, value_seq), dim=-1)
-                label_windows = [label_id, self.__getlb_idx(idx + 1)[0]]
+                raise 'Deprecated!'
+                # value_seq_left = self.__getseq_idx(idx - 1)
+                # value_seq = torch.concat((value_seq_left, value_seq), dim=-1)
+                # label_windows = [label_id, self.__getlb_idx(idx + 1)[0]]
 
 
         label_windows_array = np.zeros((self.num_class, len(label_windows)))

@@ -1,5 +1,5 @@
 import os
-DATA_CONFIG_PATH = "data_config_infer2.yml"
+DATA_CONFIG_PATH = "data_config_train.yml"
 DATA_DIR = None
 DUMP_FILE_PATTERN = None
 W_DIR = "."
@@ -22,8 +22,10 @@ TWO_CHAINS = True
 
 assert (TWO_CHAINS or THREE_CHAINS) and (TWO_CHAINS != THREE_CHAINS)
 LEFT = 2
-TWO_SIDE = 3
 MID = 1
+TWO_SIDE = 5 # = WINDOWS_SIZE
+WINDOW_SIZE = TWO_SIDE
+POS_ID = int(WINDOW_SIZE / 2)
 DEVICE = None
 MODE_TYPE = "CNN2C"
 SIDE_FLAG = TWO_SIDE
@@ -40,3 +42,4 @@ TEST_ID = 1
 
 STAR_THRESHOLD = 0.55
 RULE = True
+W_STAR = 1

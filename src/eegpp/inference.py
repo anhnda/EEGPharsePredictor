@@ -53,7 +53,10 @@ def parse_x():
 
 def get_loss_c3(out, lws_array, device, w3=None):
     if w3 is None:
-        w3 = [0.85, 1, 0.85]
+        if params.WINDOW_SIZE == 3:
+            w3 = [0.85, 1, 0.85]
+        elif params.WINDOW_SIZE == 5:
+            w3 = [0.4, 0.85, 1, 0.85, 0.4]
     target = lws_array.to(device)
     loss = 0
     for i in range(3):
@@ -101,6 +104,7 @@ def infer(opts=None,fft=True):
     model.to(device)
 
     datasets = get_dataset()
+    torch.no_grad()
     for i, ds in enumerate(datasets):
         print("Interring...")
         i = i + 1
@@ -113,6 +117,7 @@ def infer(opts=None,fft=True):
         sm = torch.nn.Softmax(dim=-1)
 
         predicted_test = []
+        predicted_binary = []
         ffts = []
         model.eval()
         for ii, data in tqdm(enumerate(dataloader)):
@@ -121,7 +126,6 @@ def infer(opts=None,fft=True):
                 s = x.detach().numpy()[:, 0, params.MAX_SEQ_SIZE: 2*params.MAX_SEQ_SIZE]
                 si = s*infer_ds.misc["mxs"][0]
                 r = utils.get_fft(si)
-
                 ffts.append(r)
                 # if (ii%20==0 and ii>100):
                 #     print(infer_ds.misc["TIME_ANCHORS"][ii*10], si[:, :10])
@@ -132,18 +136,34 @@ def infer(opts=None,fft=True):
                 x = torch.unsqueeze(x, 1)
 
             x = x.float().to(device)
-            prediction = model(x)
+            prediction, prediction2 = model(x)
             predicted_test.append(prediction.detach().cpu())
+            predicted_binary.append(prediction2.detach().cpu())
+
 
         if params.OUT_3C:
-            predicted_test = torch.concat(predicted_test, dim=0).detach().cpu()[:, :-1, 1]
+            predicted_test = torch.concat(predicted_test, dim=0).detach().cpu()[:, :-1, params.POS_ID]
+            predicted_binary = torch.concat(predicted_binary, dim=0).detach().cpu()[:, :, params.POS_ID]
+
         else:
+            raise 'Not implemented yet'
             predicted_test = torch.concat(predicted_test, dim=0).detach().cpu()[:, :-1]
 
-        ss = sm(predicted_test)
-        np.savetxt("%s/%s_SCORES.txt" % (OUT_DIR, BASE_NAME), ss, fmt="%.4f")
+        predicted_test = sm(predicted_test)
+        predicted_binary = sm(predicted_binary)
+
+        np.savetxt("%s/%s_SCORES.txt" % (OUT_DIR, BASE_NAME), predicted_test, fmt="%.12f")
+        # np.savetxt("%s/%s_BINARY_SCORES.txt" % (OUT_DIR, BASE_NAME), predicted_binary, fmt="%.12f")
+        predicted_lb_binary = np.argmax(predicted_binary, axis=-1)
+        # fout_star_lb = open("%s/%s_LB_BIARY.txt" % (OUT_DIR, BASE_NAME), "w")
+        # for lb_binary in predicted_lb_binary:
+        #     if lb_binary == 0:
+        #         fout_star_lb.write("-\n")
+        #     else:
+        #         fout_star_lb.write("*\n")
+        # fout_star_lb.close()
         # predicted_lbids = np.argmax(ss.numpy(), axis=-1)
-        predicted_lbids = correct_star(ss.numpy(), params.STAR_THRESHOLD)
+        predicted_lbids = correct_star(predicted_test.numpy(), params.STAR_THRESHOLD)
         if params.RULE:
             correct_4wr(predicted_lbids)
         predicted_lbs = []

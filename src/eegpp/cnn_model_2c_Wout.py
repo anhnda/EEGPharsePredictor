@@ -30,16 +30,18 @@ def get_dim(dim, flag):
     return dim * flag
 
 
-class CNNModel2C3Out(nn.Module):
-    def __init__(self, n_class, n_base=16, flag=1, out_collapsed=True, n_conv=8):
+class CNNModel2CWOut(nn.Module):
+    def __init__(self, n_class, n_base=16, flag=1, out_collapsed=True, n_conv=8, window_size=5):
         super().__init__()
         self.n_class = n_class
-        self.type = "CNN2C_Out"
+        self.window_size = window_size
+        self.type = "CNN2C_WOut"
         self.flag = flag
         self.chain1_layers = nn.ModuleList()
         self.chain2_layers = nn.ModuleList()
         self.chains = [self.chain1_layers, self.chain2_layers]
         self.out_collapsed = out_collapsed
+
         base_dim = 1536
 
         for i in range(2):
@@ -86,8 +88,11 @@ class CNNModel2C3Out(nn.Module):
 
             # self.fc1 = nn.Sequential(nn.Dropout(0.1), nn.Linear(768, 320), nn.ReLU())
 
-        self.fc2 = nn.Sequential(nn.Linear(320 * 2, n_class * 3))
-
+        self.fc2 = nn.Sequential(nn.Linear(320 * 2, 320), nn.LeakyReLU(), nn.Linear(320, n_class * self.window_size))
+        self.binary_cls = nn.Sequential(nn.Linear(n_class, 20),
+                                        nn.ReLU(), nn.Linear(20, 2))
+        self.binary_cls_join = nn.Sequential(nn.Linear(n_class * self.window_size + 320*2, 20),
+                                        nn.ReLU(), nn.Linear(20, 2*self.window_size))
     def forward(self, x):
         # print("X", x.shape)
         xis = []
@@ -102,8 +107,24 @@ class CNNModel2C3Out(nn.Module):
                     xi = jlayer(xi)
                     xis.append(xi)
         out = torch.concat(xis, dim=-1)
+        outx = out
+        # print("OUTX: ", outx.shape)
         out = self.fc2(out)
-        if self.out_collapsed:
-            out = out.reshape((out.shape[0], -1, 3))
+        # print(out.shape)
+        out = out.reshape((out.shape[0], -1, self.window_size))
 
-        return out
+        out2 = torch.transpose(out, 1, 2)
+        # print("OUT2: ", out2.shape)
+
+        # out2 = self.binary_cls(out2)
+        #
+        # print("OUTX, OUT2 Origina: ",outx.shape, out2.shape)
+        tmpx = torch.concat([outx, out2.reshape(out2.shape[0], -1)], dim=1)
+        # print("TMPX: ", tmpx.shape)
+        out2 = self.binary_cls_join(tmpx)
+        # print("OUT2 cls join", out2.shape)
+        out2 = out2.reshape((out2.shape[0], -1, self.window_size))
+
+
+        # print("Final out2: ", out2.shape)
+        return out, out2

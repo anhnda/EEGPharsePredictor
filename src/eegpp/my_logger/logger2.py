@@ -1,6 +1,6 @@
 import os, yaml
 import logging.config
-import params
+from .. import params
 
 C_DIR = os.path.abspath(os.path.dirname(__file__))
 LOG_CONF = None

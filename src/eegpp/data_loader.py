@@ -18,6 +18,7 @@ def get_lbid(lb_text):
         lb_id = len(LB_DICT)
     return lb_id
 def load_labels(inp):
+    global SEP_CHECKED, SEPERATOR
     fin = open(inp, errors='ignore')
 
     labels = []
@@ -130,6 +131,7 @@ def load_seq_data_only(inp, step=4000):
 
 
 def load_seq_data_with_labels(times, labels, inp):
+    global SEP_CHECKED, SEPERATOR
     fin = open(inp, encoding='utf-8', errors='ignore')
     print(times[:10])
     print(labels[:10])
