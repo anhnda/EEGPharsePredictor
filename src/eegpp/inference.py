@@ -51,18 +51,18 @@ def parse_x():
     # print(cmd_options, params.OFF_EGG, params.OFF_EMG, params.OFF_MOT, params.RD_SEED)
     return cmd_options
 
-def get_loss_c3(out, lws_array, device, w3=None):
-    if w3 is None:
-        if params.WINDOW_SIZE == 3:
-            w3 = [0.85, 1, 0.85]
-        elif params.WINDOW_SIZE == 5:
-            w3 = [0.4, 0.85, 1, 0.85, 0.4]
-    target = lws_array.to(device)
-    loss = 0
-    for i in range(3):
-        lossi = loss_functionx(out[:, :, i], target[:, :, i])
-        loss += w3[i] * lossi
-    return loss
+# def get_loss_c3(out, lws_array, device, w3=None):
+#     if w3 is None:
+#         if params.WINDOW_SIZE == 3:
+#             w3 = [0.85, 1, 0.85]
+#         elif params.WINDOW_SIZE == 5:
+#             w3 = [0.4, 0.85, 1, 0.85, 0.4]
+#     target = lws_array.to(device)
+#     loss = 0
+#     for i in range(3):
+#         lossi = loss_functionx(out[:, :, i], target[:, :, i])
+#         loss += w3[i] * lossi
+#     return loss
 
 
 def get_dataset():

@@ -66,6 +66,8 @@ def get_loss_c3(out, lws_array, device, w3=None):
             w3 = [0.85, 1, 0.85]
         elif params.WINDOW_SIZE == 5:
             w3 = [0.4, 0.85, 1, 0.85, 0.4]
+        elif params.WINDOW_SIZE == 7:
+            w3 = [0.3, 0.4, 0.85, 1, 0.85, 0.4, 0.3]
     target = lws_array.to(device)
     loss = 0
     for i in range(params.WINDOW_SIZE):
@@ -80,6 +82,8 @@ def get_loss_c3_binary(out, lws_array, device, w3=None):
             w3 = [0.85, 1, 0.85]
         elif params.WINDOW_SIZE == 5:
             w3 = [0.4, 0.85, 1, 0.85, 0.4]
+        elif params.WINDOW_SIZE == 7:
+            w3 = [0.3, 0.4, 0.85, 1, 0.85, 0.4, 0.3]
     target = lws_array.to(device)
     loss = 0
     for i in range(params.WINDOW_SIZE):
