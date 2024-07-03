@@ -1,7 +1,11 @@
 import math
 import os.path
+import pathlib
 from optparse import OptionParser
 from pathlib import Path
+
+import yaml
+
 from . import params
 from . import utils
 from .dataset import EGGDataset
@@ -14,6 +18,8 @@ import numpy as np
 import joblib
 from .get_model import get_model, TILE_SEQ, SIDE_FLAG, device
 from .post_processing import correct_star, correct_4wr
+import contextlib
+
 CLASS_WEIGHT = None  # torch.tensor([2, 1, 0.1,  2, 2, 0.5, 0]).float().to(device)
 CLASS_WEIGHT2 = None  # torch.tensor([2, 1, 0.1,  2, 2, 0.5]).float()
 
@@ -39,6 +45,10 @@ def parse_x():
     parser.add_option("-e", "--clean", dest="clean", action="store_true", help="store tmp file")
     parser.add_option("-t", "--threshold", dest="threshold", type='float', default=params.STAR_THRESHOLD)
     parser.add_option("-n", "--norule", dest="norule", action="store_true")
+    parser.add_option("-s", "--save", dest="save", action="store_true")
+    parser.add_option("-v", "--visual", dest="visual", action="store_true")
+    parser.add_option("-i", "--id", dest="id", type = 'string', default = "")
+    parser.add_option("-l", "--silence", dest="silence", action="store_true")
 
     (cmd_options, args) = parser.parse_args()
     params.STAR_THRESHOLD = cmd_options.threshold
@@ -120,10 +130,13 @@ def infer(opts=None,fft=True):
         predicted_binary = []
         ffts = []
         model.eval()
+        all_x = []
         for ii, data in tqdm(enumerate(dataloader)):
             x, lbnamelb, _, lbws_array, _ = data
+            if opts.save:
+                all_x.append(x.detach().cpu().numpy())
             if fft:
-                s = x.detach().numpy()[:, 0, params.MAX_SEQ_SIZE: 2*params.MAX_SEQ_SIZE]
+                s = x.detach().numpy()[:, 0, params.MAX_SEQ_SIZE * int(params.WINDOW_SIZE/2): (int(params.WINDOW_SIZE/2)+1)*params.MAX_SEQ_SIZE]
                 si = s*infer_ds.misc["mxs"][0]
                 r = utils.get_fft(si)
                 ffts.append(r)
@@ -153,6 +166,9 @@ def infer(opts=None,fft=True):
         predicted_binary = sm(predicted_binary)
 
         np.savetxt("%s/%s_SCORES.txt" % (OUT_DIR, BASE_NAME), predicted_test, fmt="%.12f")
+        if opts.save:
+            all_x = np.concatenate(all_x, axis=0)
+            np.save("%s/%s_SIGNALS.npy" % (OUT_DIR, BASE_NAME), all_x)
         # np.savetxt("%s/%s_BINARY_SCORES.txt" % (OUT_DIR, BASE_NAME), predicted_binary, fmt="%.12f")
         predicted_lb_binary = np.argmax(predicted_binary, axis=-1)
         # fout_star_lb = open("%s/%s_LB_BIARY.txt" % (OUT_DIR, BASE_NAME), "w")
@@ -163,6 +179,7 @@ def infer(opts=None,fft=True):
         #         fout_star_lb.write("*\n")
         # fout_star_lb.close()
         # predicted_lbids = np.argmax(ss.numpy(), axis=-1)
+
         predicted_lbids = correct_star(predicted_test.numpy(), params.STAR_THRESHOLD)
         if params.RULE:
             correct_4wr(predicted_lbids)
@@ -180,12 +197,70 @@ def infer(opts=None,fft=True):
             for i in range(len(predicted_lbs)):
                 fout2.write("%s\n" % SEPERATOR.join(["%s" % (i+1),  predicted_lbs[i], infer_ds.misc["TIME_ANCHORS"][i], utils.convert_array2str(ffts[i], sep=SEPERATOR)]))
             fout2.close()
+
         if opts.clean:
             os.remove(infer_ds.dump_path)
+def plot(opts):
+    print("In plotting mode: ...")
+    config = yaml.safe_load(open(params.DATA_CONFIG_PATH))
+    OUT_DIR = config["datasets"]["out_dir"]
+    BASE_NAME = pathlib.Path(config["datasets"]["seq_files"][0]).stem
+    all_x =  np.load("%s/%s_SIGNALS.npy" % (OUT_DIR, BASE_NAME))
+    f =  open("%s/%s_LBTEXT.txt" % (OUT_DIR, BASE_NAME))
+    predicted_lbs = [l.strip() for l in f.readlines()]
+    from .visualization2 import plt, plot2ccla
+    FIG_DIR = "%s/%s/figures" % (OUT_DIR, BASE_NAME)
+    utils.ensureDir(FIG_DIR)
+    print("Plotting to %s ..." % FIG_DIR)
+
+    fig, axes = plt.subplots(1, 2, figsize=(16, 8))
+
+    def parse_ids(eid):
+        if (eid.__contains__(",")):
+            eids = eid.split(",")
+            eids = [int(eid) - 1 for eid in eids]
+        else:
+            eids = [int(eid) - 1]
+        return eids
+    def ploteid(eid):
+        seq = all_x[eid]
+        if (eid >= params.POS_ID):
+            ws_lbs = predicted_lbs[eid - params.POS_ID:eid + params.POS_ID + 1]
+        else:
+            ws_lbs = ["_" for _ in range(params.POS_ID - eid)] + predicted_lbs[0:eid + params.POS_ID + 1]
+
+        plot2ccla(fig, axes, seq, ("E%7d_%s" % (eid + 1, ws_lbs[params.POS_ID])).replace(" ", "0"), ws_lbs, FIG_DIR)
+    if len(opts.id) > 0:
+        eids = parse_ids(opts.id)
+        for eid in eids:
+            print("Plotting epoch: %d" % (eid+1))
+            ploteid(eid)
+        exit(0)
+    print("Enter EpochId with commas separator (Start indexing from 1)")
+    print("Enter -1 to exit.")
+
+    while True:
+        eid = input()
+        eids = parse_ids(eid)
+        if eids[0] == -2:
+            print("Exit.")
+            exit(0)
+        for eid in eids:
+            print("Plotting epoch: %d" % (eid+1))
+            ploteid(eid)
+
 def infer_cmd():
     opts = parse_x()
+    import sys
+    if opts.silence:
+        f = open(os.devnull, 'w')
+        sys.stdout = f
+
     print(opts)
-    infer(opts=opts)
+    if opts.visual:
+        plot(opts=opts)
+    else:
+        infer(opts=opts)
 if __name__ == "__main__":
     # torch.autograd.set_detect_anomaly(True)
     infer_cmd()

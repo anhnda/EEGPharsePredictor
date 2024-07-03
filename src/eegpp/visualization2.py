@@ -5,9 +5,9 @@ import torch
 from matplotlib import pyplot as plt
 import joblib
 
-import params
-import utils
-from train import get_model_dirname, parse_x
+from .import params
+from . import utils
+# from .train import get_model_dirname, parse_x
 
 CHANNEL_NAMES = ["EEG6", "EMG6", "MOT6"]
 
@@ -59,7 +59,62 @@ def plot3c(value_seq, score_seq, name, subtitles, n_channels=3, show=True, out_d
     plt.savefig("%s/%s.png" % (out_dir, name))
     # if show:
     #     plt.show()
+def plot2ccla(fig, axes, value_seq, fig_name, ws_names, out_dir="figs"):
+    x = [i for i in range(value_seq.shape[-1])]
+    for i in range(2):
+        vs = value_seq[i, :]
+        axes[i].plot(x, vs, [-0.2, 0.2])
+        for ax in [axes[i]]:
+            if len(vs) >= 5 * params.MAX_SEQ_SIZE - 1:
+                for j in range(4):
+                    ax.plot([(j + 1) * params.MAX_SEQ_SIZE, (j + 1) * params.MAX_SEQ_SIZE], [-0.2, .2], c='r')
+                    ax.text((2 * j + 1) * params.MAX_SEQ_SIZE / 2, 0.15, ws_names[j])
+                ax.text((2 * 4 + 1) * params.MAX_SEQ_SIZE / 2, 0.15, ws_names[4])
 
+            elif len(vs) >= 3 * params.MAX_SEQ_SIZE - 1:
+                ax.plot([params.MAX_SEQ_SIZE, params.MAX_SEQ_SIZE], [-0.2, .2], c='r')
+                ax.plot([2 * params.MAX_SEQ_SIZE, 2 * params.MAX_SEQ_SIZE], [-0.2, .2], c='r')
+                ax.text(params.MAX_SEQ_SIZE / 2, 0.15, ws_names[0])
+                ax.text(3 * params.MAX_SEQ_SIZE / 2, 0.15, ws_names[1])
+                ax.text(5 * params.MAX_SEQ_SIZE / 2, 0.15, ws_names[2])
+
+            elif len(vs) >= 2 * params.MAX_SEQ_SIZE - 1:
+                ax.plot([params.MAX_SEQ_SIZE, params.MAX_SEQ_SIZE], [-0.2, .2], c='r')
+            ax.set_title(CHANNEL_NAMES[i])
+    fig.suptitle(fig_name)
+    plt.tight_layout()
+    plt.savefig("%s/%s.png" % (out_dir, fig_name))
+    axes[0].cla()
+    axes[1].cla()
+
+def plot2c(value_seq, fig_name, ws_names, n_channels=2, out_dir="figs"):
+    plt.figure()
+
+    x = [i for i in range(value_seq.shape[-1])]
+    fig, axes = plt.subplots(1, n_channels, figsize=(12, 8))
+    for i in range(n_channels):
+        vs = value_seq[i, :]
+        axes[i].plot(x, vs, [-0.2, 0.2])
+        for ax in [axes[i]]:
+            if len(vs) >= 5 * params.MAX_SEQ_SIZE - 1:
+                for j in range(4):
+                    ax.plot([(j+1) * params.MAX_SEQ_SIZE, (j+1) * params.MAX_SEQ_SIZE], [-0.2, .2], c='r')
+                    ax.text((2*j+1)  * params.MAX_SEQ_SIZE / 2, 0.15, ws_names[i])
+                ax.text((2*4+1)  * params.MAX_SEQ_SIZE / 2, 0.15, ws_names[4])
+
+            elif len(vs) >= 3 * params.MAX_SEQ_SIZE - 1:
+                ax.plot([params.MAX_SEQ_SIZE, params.MAX_SEQ_SIZE], [-0.2, .2], c='r')
+                ax.plot([2 * params.MAX_SEQ_SIZE, 2 * params.MAX_SEQ_SIZE], [-0.2, .2], c='r')
+                ax.text(params.MAX_SEQ_SIZE / 2, 0.15, ws_names[0])
+                ax.text(3 * params.MAX_SEQ_SIZE / 2, 0.15, ws_names[1])
+                ax.text(5 * params.MAX_SEQ_SIZE / 2, 0.15, ws_names[2])
+
+            elif len(vs) >= 2 * params.MAX_SEQ_SIZE - 1:
+                ax.plot([params.MAX_SEQ_SIZE, params.MAX_SEQ_SIZE], [-0.2, .2], c='r')
+            ax.set_title(CHANNEL_NAMES[i])
+    fig.suptitle(fig_name)
+    plt.tight_layout()
+    plt.savefig("%s/%s.png" % (out_dir, fig_name))
 
 def plot_id(idx, show=False, out_dir=None):
     val = np.squeeze(val_seqs[idx])
@@ -111,47 +166,48 @@ def plot_id(idx, show=False, out_dir=None):
 
 
 if __name__ == "__main__":
-    parse_x()
-    fig_dir = get_model_dirname() + "/figs/" + "%s" % params.TRAIN_ID + "_" + "%s" % params.TEST_ID
-    os.system("rm -rf %s/*" % fig_dir)
-    utils.ensureDir(fig_dir)
-
-    MODEL_ID = params.TRAIN_ID
-    TEST_ID = params.TEST_ID
-    model_xpath = "%s/xmodel_%s_%s.pkl" % (get_model_dirname(), MODEL_ID, TEST_ID)
-    print("Model xpath: ", model_xpath)
-    val_seqs, labels, lbws, shaps, idx2lb, epochess, preds, preds_3os = joblib.load(model_xpath)
-    shaps = np.squeeze(np.asarray(shaps))
-    epochess = np.squeeze(np.asarray(epochess))
-    print(idx2lb)
-    # print(len(val_seqs), len(val_seqs[0]), val_seqs[0].shape)
-    # exit(-1)
-    all_preds = []
-    all_lbs = []
-
-    for i in range(1999):
-        if i == 20001 or i == len(preds):
-            break
-        lb, pred = plot_id(i, show=False, out_dir=fig_dir)
-        all_preds.append(pred)
-        all_lbs.append(lb)
-    print(all_lbs)
-    print(all_preds)
-    from evals import get_confussion_from_list, plot_cfs_matrix
-    from sklearn.metrics import precision_score, recall_score, f1_score
-
-    cfs_matrix = get_confussion_from_list(all_lbs, all_preds, 6)
-    plot_cfs_matrix(cfs_matrix, False, out_dir=fig_dir)
-    mm = 'macro'
-    pre = precision_score(all_lbs, all_preds, average=mm)
-    rec = recall_score(all_lbs, all_preds, average=mm)
-    f1 = f1_score(all_lbs, all_preds, average=mm)
-    print("Precision: ", pre)
-    print("Recall: ", rec)
-    print("F1: ", f1)
-    fout = open(fig_dir + "/re_test.txt", "w")
-    fout.write("Precision,Recall,F1,%s,%.4f,%.4f,%.4f" % (mm, pre, rec, f1))
-    fout.close()
+    pass
+    # parse_x()
+    # fig_dir = get_model_dirname() + "/figs/" + "%s" % params.TRAIN_ID + "_" + "%s" % params.TEST_ID
+    # os.system("rm -rf %s/*" % fig_dir)
+    # utils.ensureDir(fig_dir)
+    #
+    # MODEL_ID = params.TRAIN_ID
+    # TEST_ID = params.TEST_ID
+    # model_xpath = "%s/xmodel_%s_%s.pkl" % (get_model_dirname(), MODEL_ID, TEST_ID)
+    # print("Model xpath: ", model_xpath)
+    # val_seqs, labels, lbws, shaps, idx2lb, epochess, preds, preds_3os = joblib.load(model_xpath)
+    # shaps = np.squeeze(np.asarray(shaps))
+    # epochess = np.squeeze(np.asarray(epochess))
+    # print(idx2lb)
+    # # print(len(val_seqs), len(val_seqs[0]), val_seqs[0].shape)
+    # # exit(-1)
+    # all_preds = []
+    # all_lbs = []
+    #
+    # for i in range(1999):
+    #     if i == 20001 or i == len(preds):
+    #         break
+    #     lb, pred = plot_id(i, show=False, out_dir=fig_dir)
+    #     all_preds.append(pred)
+    #     all_lbs.append(lb)
+    # print(all_lbs)
+    # print(all_preds)
+    # from evals import get_confussion_from_list, plot_cfs_matrix
+    # from sklearn.metrics import precision_score, recall_score, f1_score
+    #
+    # cfs_matrix = get_confussion_from_list(all_lbs, all_preds, 6)
+    # plot_cfs_matrix(cfs_matrix, False, out_dir=fig_dir)
+    # mm = 'macro'
+    # pre = precision_score(all_lbs, all_preds, average=mm)
+    # rec = recall_score(all_lbs, all_preds, average=mm)
+    # f1 = f1_score(all_lbs, all_preds, average=mm)
+    # print("Precision: ", pre)
+    # print("Recall: ", rec)
+    # print("F1: ", f1)
+    # fout = open(fig_dir + "/re_test.txt", "w")
+    # fout.write("Precision,Recall,F1,%s,%.4f,%.4f,%.4f" % (mm, pre, rec, f1))
+    # fout.close()
     # exit(-1)
     # while True:
     #     idx = int(input("Enter Test Index: "))

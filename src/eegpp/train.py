@@ -1,7 +1,6 @@
 import math
 from optparse import OptionParser
 
-import params
 import utils
 from dataset import EGGDataset
 from torch.utils.data import DataLoader

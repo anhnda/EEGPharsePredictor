@@ -1,5 +1,5 @@
 import os
-DATA_CONFIG_PATH = "data_config_train.yml"
+DATA_CONFIG_PATH = "data_config_infer2.yml"
 DATA_DIR = None
 DUMP_FILE_PATTERN = None
 W_DIR = "."
@@ -40,6 +40,6 @@ MODEL_PATH = "%s/model_1.pkl" % C_DIR
 TRAIN_ID = 1
 TEST_ID = 1
 
-STAR_THRESHOLD = 0.55
+STAR_THRESHOLD = 0
 RULE = True
 W_STAR = 1

@@ -44,3 +44,34 @@ e.g.
 ```
     python -m eegpp -p data_config_infer.yml -e -t 0.55
 ```
+
+No rule:
+```
+    python -m eegpp -p data_config_infer.yml -e -t 0 -n
+```
+
+Add option -l to enter silence mode (no screen output).
+
+For visualization:
+
+First run inference with option -s:
+
+```
+    python -m eegpp -p data_config_infer.yml -e -t 0 -n -s
+```
+
+Then:
+
+```
+    python -m eegpp -p data_config_infer.yml -v
+```
+
+To enter visualization mode for the first dataset in data_config_infer.yml. 
+EpochID starts with 1
+
+or add -i option to set epoch ids
+
+```
+    python -m eegpp -p data_config_infer.yml -v -i EpochID1,EpochId2,...,EpochIDn
+```
+To plot the signal and prediction of the EpochID (Indexing from 1), separating by commas
