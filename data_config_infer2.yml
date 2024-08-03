@@ -1,7 +1,8 @@
 datasets:
   time_step: 4000 #milliseconds
   data_dir: "/Users/anhnd/CodingSpace/Python/W"
-  tmp_dir : "/Users/anhnd/CodingSpace/Python/W"
-  out_dir: "/Users/anhnd/CodingSpace/Python/W"
-  seq_files: ["K2_EEG1_S-KET.csv"]
+  tmp_dir : "/Users/anhnd/CodingSpace/Python/W/tmp"
+  out_dir: "/Users/anhnd/CodingSpace/Python/W/out"
+  seq_files: ["raw_K3_EEG3_11h.txt", "raw_RS2_EEG1_23 hr.txt", "raw_S1_EEG1_23 hr.txt"]
+  template_files: ["K3_EEG3_11h.txt", "RS2_EEG1_23 hr.txt", "S1_EEG1_23 hr.txt"] # if no template, set to : [ ] or remove this line
   out_seperator: "\t"

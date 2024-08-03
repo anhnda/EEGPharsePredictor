@@ -1,5 +1,5 @@
 import torch
-from . import params
+from .. import params
 class FFTModel(torch.nn.Module):
     def __init__(self, n_class):
         super().__init__()

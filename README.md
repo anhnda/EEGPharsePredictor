@@ -16,10 +16,11 @@ datasets:
   tmp_dir : "FULL_PATH_TO_THE_TMP_FOLDER"
   out_dir: "FULL_PATH_TO_THE_OUTPUT_FOLDER"
   seq_files: ["name_of_raw_file_1", "name_of_raw_file_2",...,"name_of_raw_file_n]
+  template_files: ["template_label_file_1", "template_label_file_2", ..., "template_label_file_n"]
   out_seperator: "\t"
 
 ```
-
+If there is no template for label file, leave it as : template_files: [] or remove the line
 Example:
 ```
 datasets:
@@ -28,6 +29,19 @@ datasets:
   tmp_dir : "/home/EEGData/tmp"
   out_dir: "/home/EEGData/EEG_test_files"
   seq_files: ["raw_K3_EEG3_11h.txt", "raw_RS2_EEG1_23 hr.txt", "raw_S1_EEG1_23 hr.txt"]
+  template_files: ["K3_EEG3_11h.txt", "RS2_EEG1_23 hr.txt", "S1_EEG1_23 hr.txt"] # if no template, set to : [ ] or remove this line
+  out_seperator: "\t" for tab or "," for commas
+
+```
+or
+```
+datasets:
+  time_step: 4000 #milliseconds
+  data_dir: "/home/EEGData/EEG_test_files"
+  tmp_dir : "/home/EEGData/tmp"
+  out_dir: "/home/EEGData/EEG_test_files"
+  seq_files: ["raw_K3_EEG3_11h.txt", "raw_RS2_EEG1_23 hr.txt", "raw_S1_EEG1_23 hr.txt"]
+  template_files: [] # if no template, set to : [ ] or remove this line
   out_seperator: "\t" for tab or "," for commas
 
 ```

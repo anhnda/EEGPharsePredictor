@@ -1,9 +1,10 @@
-from .import header_lb
-from .import params
-from .import utils
+from . import header_lb
+from . import params
+from . import utils
 import joblib
 import os
 from pathlib import Path
+
 LABEL_MARKER = "EpochNo"
 SEQ_MARKER = "Time"
 
@@ -11,12 +12,33 @@ LB_DICT = {'W': 0, 'W*': 1, 'NR': 2, 'NR*': 3, 'R': 4, 'R*': 5}
 
 SEP_CHECKED = False
 SEPERATOR = '\t'
+
+
 def get_lbid(lb_text):
     try:
         lb_id = LB_DICT[lb_text]
     except:
         lb_id = len(LB_DICT)
     return lb_id
+
+
+def fread_header_labels(inp):
+    global SEP_CHECKED, SEPERATOR
+    fin = open(inp, errors='ignore')
+
+    headers = []
+
+    while True:
+        line = fin.readline()
+        if line == "":
+            break
+        headers.append(line)
+        if line.startswith(LABEL_MARKER):
+            break
+
+    return "".join(headers), fin
+
+
 def load_labels(inp):
     global SEP_CHECKED, SEPERATOR
     fin = open(inp, errors='ignore')
@@ -36,7 +58,8 @@ def load_labels(inp):
         line = fin.readline()
         if line == "":
             break
-        if not SEP_CHECKED:
+        ic += 1
+        if ic == 1 or not SEP_CHECKED:
             if line.__contains__(","):
                 SEPERATOR = ","
             SEP_CHECKED = True
@@ -53,6 +76,7 @@ def load_labels(inp):
         times.append(time_v)
     fin.close()
     return labels, times, LB_DICT
+
 
 def load_seq_data_only(inp, step=4000):
     global SEP_CHECKED, SEPERATOR
@@ -113,7 +137,6 @@ def load_seq_data_only(inp, step=4000):
                 ctime = time_v
                 time_anchors.append(time_text)
 
-
         for i, value_text in enumerate(value_texts):
 
             v = float(value_text)
@@ -127,7 +150,6 @@ def load_seq_data_only(inp, step=4000):
     misc["mxs"] = mxs
     print("\nFinal Length: ", len(value_seqs[0]), len(misc["TIME_ANCHORS"]))
     return value_seqs, mxs, misc
-
 
 
 def load_seq_data_with_labels(times, labels, inp):
@@ -149,10 +171,12 @@ def load_seq_data_with_labels(times, labels, inp):
     is_exit = False
     mx1, mx2, mx3 = -10000, -10000, -10000
     mxs = [mx1, mx2, mx3]
+    ic = 0
     while not is_exit:
         while time_v < times[cid]:
             line = fin.readline()
-            if not SEP_CHECKED:
+            ic += 1
+            if ic == 1 or not SEP_CHECKED:
                 if line.__contains__(","):
                     SEPERATOR = ","
                 SEP_CHECKED = True
@@ -232,6 +256,8 @@ def load_data_no_label(force_reload=False, dump_path=None, seq_path=None, time_s
     else:
         value_seqs, mxs, misc = load_seq_data_only(seq_path, time_step)
         joblib.dump((value_seqs, mxs, misc), dump_path)
+
+
 def force_load_all_with_labels():
     import yaml
     config = yaml.safe_load(open(params.DATA_CONFIG_PATH))
@@ -241,6 +267,7 @@ def force_load_all_with_labels():
         label_file = "%s/%s" % (data_dir, config["datasets"]["label_files"][i])
         dump_file = "%s/%s" % (data_dir, config["datasets"]["dump_files"][i])
         load_data_with_labels(force_reload=True, dump_path=dump_file, label_path=label_file, seq_path=seq_file)
+
 
 def force_load_all_no_labels():
     import yaml
@@ -252,10 +279,10 @@ def force_load_all_no_labels():
     for i, seq_file in enumerate(config["datasets"]["seq_files"]):
         seq_file = "%s/%s" % (data_dir, seq_file)
         dump_file = ("%s/%s" % (tmp_dir, seq_file)).replace(".txt", ".pkl")
-        load_data_no_label(force_reload=True, dump_path=dump_file, seq_path=seq_file,time_step=TIME_STEP)
+        load_data_no_label(force_reload=True, dump_path=dump_file, seq_path=seq_file, time_step=TIME_STEP)
 
 
 if __name__ == "__main__":
-    force_load_all_with_labels()
+    # force_load_all_with_labels()
     # force_load_all_no_labels()
     pass

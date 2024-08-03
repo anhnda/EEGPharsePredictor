@@ -22,6 +22,7 @@ src/eegpp/header_lb.py
 src/eegpp/inference.py
 src/eegpp/main.py
 src/eegpp/model_1.pkl
+src/eegpp/model_1_best.pkl
 src/eegpp/params.py
 src/eegpp/plot_re_channels.py
 src/eegpp/post_processing.py

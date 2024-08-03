@@ -1,10 +1,10 @@
-from .transformer_model import EGGPhrasePredictor
-from .cnn_model import CNNModel
+from .misc.transformer_model import EGGPhrasePredictor
+from .misc.cnn_model import CNNModel
 # from cnn_model_2d import CNNModel2
-from .cnn_model_3c import CNNModel3C
+from .misc.cnn_model_3c import CNNModel3C
+from .misc.cnn_model_3c_3out import CNNModel3C3Out
 from .cnn_model_2c_Wout import CNNModel2CWOut
-from .cnn_model_3c_3out import CNNModel3C3Out
-from .fft_model import FFTModel
+from .misc.fft_model import FFTModel
 from . import params
 from .dev import get_device
 
