@@ -2,12 +2,12 @@
 requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 [project]
-name = "eegpp2-beta"
+name = "eegpp3-beta"
 version = "0.1.6"
 authors = [
-    { name = "Vũ Anh Tuấn", email = "vuanhtuan1407@gmail.com" },
+    { name = "Duc Anh Nguyen, Vu An Tuan", email = "vuanhtuan1407@gmail.com" },
 ]
-description = "EEG Phrase Predictor ver 2"
+description = "EEG Phrase Predictor ver 3"
 readme = "README.md"
 requires-python = ">=3.10"
 classifiers = [
