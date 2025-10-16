@@ -1,5 +1,9 @@
 import argparse
-
+import warnings
+warnings.filterwarnings(
+    "ignore",
+    message="Please use the new API settings to control TF32 behavior"
+)
 from . import params
 from .inference import infer, infer2
 from .trainer import EEGKFoldTrainer
