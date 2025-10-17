@@ -79,7 +79,7 @@ def generate_normal_vector(length, mean=0, std=1.5):
 
 
 if __name__ == '__main__':
-    print(generate_normal_vector(1))
+    print(generate_normal_vector(5))
     # print(convert_ms2datetime(686505744000))
     # print(convert_datetime2ms("2021.10.02. 21:59:52"))
     # print((convert_datetime2ms("2021.10.02. 21:59:52") - convert_datetime2ms("2021.10.02. 10:06:12")) / 4000 + 1)

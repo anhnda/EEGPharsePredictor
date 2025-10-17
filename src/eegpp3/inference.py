@@ -8,7 +8,7 @@ import numpy as np
 from lightning import Fabric
 from torch.utils.data import DataLoader
 from tqdm import tqdm
-
+import copy
 from . import CACHE_DIR, params
 from .out import OUT_DIR
 from .dataset import EEGDataset
@@ -114,6 +114,22 @@ def get_checkpoint(model_type, torchscript=False, map_to_device=torch.device('cp
         model.load_state_dict(state_dict['model_state_dict'])
         return model
 
+
+def post_processing_lb(lb_preds):
+    lb_out = lb_preds
+    ln = len(lb_out)
+    i = ln-1
+    s = -1
+    while i >= 0:
+        if (lb_out[i] == "R" or lb_out[i] == "R*") and (lb_out[i-1] == "W" or lb_out[i-1] == "W*"):
+            s = i
+            while (lb_out[i - 1] == "W" or lb_out[i - 1] == "W*") and i > 0:
+                i = i - 1
+            for j in range(i,s+1):
+                lb_out[j] = lb_out[i-1]
+        i = i - 1
+    return lb_out
+
 def infer2(opts=None):
     import yaml
     config = yaml.safe_load(open(opts.yaml_config_path))
@@ -194,10 +210,9 @@ def infer2(opts=None):
             test_pred_binary = np.argmax(test_pred_binary)
 
 
-
-
         for lb_id in test_pred:
             predicted_lbs.append(LABEL_DICT[lb_id])
+        predicted_lbs = post_processing_lb(predicted_lbs)
         fout = open("%s/%s_TMP_LBTEXT.txt" % (OUT_DIR, BASE_NAME), "w")
         for lbname in predicted_lbs:
             fout.write("%s\n" % lbname)
