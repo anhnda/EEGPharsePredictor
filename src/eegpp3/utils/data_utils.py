@@ -4,7 +4,7 @@ import dropbox
 import joblib
 import numpy as np
 from tqdm import tqdm
-
+from scipy.signal import resample_poly
 from ..data import SEQ_FILES, LABEL_FILES, DUMP_DATA_FILES
 from .. import params
 from ..utils.common_utils import get_path_slash, convert_ms2datetime, convert_datetime2ms
@@ -40,6 +40,7 @@ def dump_seq_with_labels(seq_files=SEQ_FILES, lb_files=LABEL_FILES, save_files=D
 def dump_seq_with_no_labels(seq_files=SEQ_FILES, step_ms=4000, save_files=DUMP_DATA_FILES["infer"]):
     try:
         all_start_ms, all_eeg, all_emg, all_mot, all_mxs = load_seq_only(seq_files, step_ms)
+        # print(all_start_ms[:10])
         for i, (start_ms, eeg, emg, mot, mxs) in enumerate(zip(all_start_ms, all_eeg, all_emg, all_mot, all_mxs)):
             print(f'Dumping data in file {save_files[i]}')
             start_datetime = [convert_ms2datetime(ms) for ms in start_ms]
@@ -126,6 +127,7 @@ def load_seq_with_labels(seq_files=SEQ_FILES, lb_files=LABEL_FILES):
 
 
 def load_seq_only(data_files=SEQ_FILES, step_ms=None):
+    print("LOAD X\n")
     if step_ms is None:
         step_ms = 4000
     print('Processing sequences...')
@@ -163,13 +165,23 @@ def load_seq_only(data_files=SEQ_FILES, step_ms=None):
                         mxs[j] = abs(float(value))
 
                 ms = convert_datetime2ms(dt)
+                #print(dt, ms)
                 if tmp_ms == 0:
                     tmp_ms = ms
                 if ms - tmp_ms >= step_ms:
                     start_ms.append(tmp_ms)
+                    # For 512 up to 1024
+                    if len(tmp_eeg) == params.MAX_SEQ_SIZE // 2:
+                        tmp_eeg = resample_poly(tmp_eeg,2,1)
+                        tmp_emg = resample_poly(tmp_emg,2,1)
+                        tmp_mot = resample_poly(tmp_mot,2,1)
                     eeg.append(tmp_eeg)
                     emg.append(tmp_emg)
                     mot.append(tmp_mot)
+
+
+
+
                     tmp_ms = ms
                     tmp_eeg, tmp_emg, tmp_mot = [[], [], []]
 
@@ -177,12 +189,14 @@ def load_seq_only(data_files=SEQ_FILES, step_ms=None):
                 tmp_emg.append(float(values[1]))
                 tmp_mot.append(float(values[2]))
 
+
             start_ms.append(tmp_ms)
             eeg.append(tmp_eeg)
             emg.append(tmp_emg)
             mot.append(tmp_mot)
 
         all_start_ms.append(start_ms)
+        assert len(eeg) == len(emg) == len(mot)
         all_eeg.append(eeg)
         all_emg.append(emg)
         all_mot.append(mot)

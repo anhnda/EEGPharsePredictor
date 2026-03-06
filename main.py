@@ -1,9 +1,10 @@
 import argparse
 
-from src.eegpp2 import params
-from src.eegpp2.inference import infer
-from src.eegpp2.trainer import EEGKFoldTrainer
-from src.eegpp2.visualization import visualize_results
+from src.eegpp3 import params
+from src.eegpp3.inference import infer, infer2
+from src.eegpp3.trainer import EEGKFoldTrainer
+from src.eegpp3.visualization import visualize_results
+
 
 
 def parse_arguments():
@@ -25,19 +26,21 @@ def parse_arguments():
     parser.add_argument("--infer_path", type=str, default=None)
     parser.add_argument("--remove_tmp", type=bool, default=True)
     parser.add_argument('--accelerator', type=str, default='auto')
+    parser.add_argument("-p", "--yaml_config_path", type=str, default='../../data_config_infer2.yml')
+
     return parser.parse_args()
 
-
-def parse_options():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--data_file', type=str, default='default')
-    parser.add_argument("--infer_path", type=str, default=None)
-    parser.add_argument("--model_type", type=str, default="stftcnn1dnc")
-    parser.add_argument("--batch_size", type=int, default=10)
-    parser.add_argument("--n_workers", type=int, default=0)
-    parser.add_argument("--checkpoint_path", type=str, default=None)
-    return parser.parse_args()
-
+#
+# def parse_options():
+#     parser = argparse.ArgumentParser()
+#     parser.add_argument('--data_file', type=str, default='default')
+#     parser.add_argument("--infer_path", type=str, default=None)
+#     parser.add_argument("--model_type", type=str, default="stftcnn1dnc")
+#     parser.add_argument("--batch_size", type=int, default=10)
+#     parser.add_argument("--n_workers", type=int, default=0)
+#     parser.add_argument("--checkpoint_path", type=str, default=None)
+#     return parser.parse_args()
+#
 
 def run():
     args = parse_arguments()
@@ -64,22 +67,36 @@ def run():
     else:
         # opts = parse_options()
         opts = args  # dummy code
-        if args.data_file == 'default':
+        if args.data_file == 'default' and opts.yaml_config_path is None:
             raise ValueError('--data_file must be specified in infer mode')
         else:
-            infer(
-                data_path=opts.data_file,
-                infer_path=opts.infer_path,
-                model_type=opts.model_type,
-                batch_size=opts.batch_size,
-                n_workers=opts.n_workers,
-                checkpoint_path=opts.checkpoint_path,
-                remove_tmp=opts.remove_tmp,
-            )
+            if opts.yaml_config_path is not None:
+                params.DATA_CONFIG_PATH = opts.yaml_config_path
+                infer2(opts)
+
+            else:
+                infer(
+                    data_path=opts.data_file,
+                    infer_path=opts.infer_path,
+                    model_type=opts.model_type,
+                    batch_size=opts.batch_size,
+                    n_workers=opts.n_workers,
+                    checkpoint_path=opts.checkpoint_path,
+                    remove_tmp=opts.remove_tmp,
+                )
 
 
 if __name__ == "__main__":
     run()
+
+    # import torch
+    #
+    # t = torch.rand(2, 5120)
+    # window = torch.hamming_window(2048)
+    # rf = torch.fft.rfft(t)
+    # rs = torch.stft(t, n_fft=2048, win_length=2048, hop_length=512, normalized=True, return_complex=True, window=window)
+    # rt = torch.sqrt(rs.real ** 2 + rs.imag ** 2)
+    # print(rt, rt.shape)
 
     # import torch
     #

@@ -39,7 +39,11 @@ class EEGDataset(Dataset):
         # else:
         #     self.start_datetime, self.eeg, self.emg, self.mot, self.mxs = joblib.load(dump_path)
         #     self.lbs = []
+        #print(len(self.eeg[0]))
+        #exit(-1)
         self.segment_length = params.MAX_SEQ_SIZE
+        assert self.segment_length == len(self.eeg[0])
+
 
     def __len__(self):
         return len(self.start_datetime)

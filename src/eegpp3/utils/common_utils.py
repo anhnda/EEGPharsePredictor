@@ -15,8 +15,8 @@ def convert_time(time_string, offset=946659600000):
         FORMAT1 = '%m/%d/%Y  %H:%M:%S.%f'
         FORMAT11 = '%m/%d/%Y  %H:%M:%S.%f'
     elif time_string.__contains__(". "):
-        FORMAT1 = '%m. %d. %Y.  %H:%M:%S.%f'
-        FORMAT11 = '%m. %d. %Y.  %H:%M:%S.%f'
+        FORMAT1 = '%Y. %m. %d.  %H:%M:%S.%f'
+        FORMAT11 = '%Y. %m. %d.  %H:%M:%S.%f'
     try:
         if time_string[-5:].__contains__("."):
             dt_obj = datetime.strptime(time_string,
@@ -32,16 +32,17 @@ def convert_time(time_string, offset=946659600000):
 
 
 def convert_datetime2ms(datetime_str: str, offset=946659600000):
+
     if datetime_str.__contains__("/"):
         format_seq = '%m/%d/%Y  %H:%M:%S.%f'
         format_lb = '%m/%d/%Y  %H:%M:%S'
     elif datetime_str.__contains__(". "):
-        format_seq = '%m. %d. %Y.  %H:%M:%S.%f'
-        format_lb = '%m. %d. %Y.  %H:%M:%S'
+        format_seq = '%Y. %m. %d.  %H:%M:%S.%f'
+        format_lb = '%Y. %m. %d.  %H:%M:%S'
     else:
         format_seq = FORMAT1
         format_lb = FORMAT2
-
+    #print(format_seq, format_lb)
     try:
         if datetime_str[-5:].__contains__("."):
             dt_obj = datetime.strptime(datetime_str, format_seq)
@@ -49,7 +50,8 @@ def convert_datetime2ms(datetime_str: str, offset=946659600000):
             dt_obj = datetime.strptime(datetime_str, format_lb)
 
         ms = int(dt_obj.timestamp() * 1000) - offset
-    except:
+    except Exception as e:
+        print(e)
         ms = -1
     return ms
 

@@ -193,7 +193,6 @@ def infer2(opts=None):
             # freeze_parameters(model)
             infer_bar = tqdm(enumerate(dataloader), total=len(dataloader), desc="Inference")
             for batch_idx, batch in infer_bar:
-
                 x, _, _ = batch
                 pred, pred_binary = model(x)
                 # ONLY TEST ON THE MAIN SEGMENT
