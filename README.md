@@ -1,4 +1,4 @@
-# EEG Phase Predictor ver 2
+# EEG Phase Predictor ver 3
 
 **Note: This is beta version, use for training with default dataset and inference only
 
@@ -29,6 +29,18 @@ ex: `python -m eegpp3 --mode "train" --model_type "stftcnn1dnc" --n_epochs 20 --
 
 ex: `python -m eegpp3 -p "data_config_infer.yml"`
 
+An example of the configuration file:
+```
+datasets:
+  time_step: 4000 #milliseconds
+  data_dir: "/home/user/data"
+  tmp_dir: "/home/user/tmp"
+  out_dir: "/home/user/out"
+  seq_files: ["raw_K3_EEG3_11h.txt", "raw_RS2_EEG1_23 hr.txt"]
+  template_files: [] # ["K3_EEG3_11h.txt", "RS2_EEG1_23 hr.txt", "S1_EEG1_23 hr.txt"] # if no template, set to : [ ] or remove this line
+  out_seperator: "\t"
+```
+Change directory (dir) with the correct path
 2. New version
 
 ```aiignore
