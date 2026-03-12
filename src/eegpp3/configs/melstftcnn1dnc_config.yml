@@ -1,0 +1,39 @@
+num_chains: 3
+
+# STFT parameters for 256Hz sampling
+n_fft_256: 2048
+win_length_256: 2048
+hop_length_256: 512
+
+# STFT parameters for 128Hz sampling
+n_fft_128: 1024
+win_length_128: 1024
+hop_length_128: 256
+
+# Mel filterbank parameters
+n_mels: 64  # Number of mel frequency bins
+fmin: 0     # Minimum frequency (Hz)
+fmax: 128   # Maximum frequency (Hz) - covers full 256Hz Nyquist range
+
+normalized: True
+
+# Conv1D layers - input channels = n_mels (64) instead of n_fft//2+1 (1025)
+conv_layers:
+  - name: conv1
+    out_channels: 4096
+    kernel_size: 3
+    stride: 1
+    padding: 0
+    pooling_kernel_size: 3
+    pooling_stride: 2
+    pooling_padding: 0
+    dropout: 0.1
+  - name: conv2
+    out_channels: 1024
+    kernel_size: 1
+    stride: 1
+    padding: 0
+    pooling_kernel_size: 2
+    pooling_stride: 2
+    pooling_padding: 0
+    dropout: 0.1

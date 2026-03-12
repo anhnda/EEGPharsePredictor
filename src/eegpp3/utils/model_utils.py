@@ -10,6 +10,7 @@ from ..models.fft2c import FFT2CModel
 from ..models.fftcnn1dnc import FFTCNN1DnCModel
 from ..models.ffttransnc import FFTTransnCModel
 from ..models.stftcnn1dnc import STFTCNN1DnCModel
+from ..models.melstftcnn1dnc import MelSTFTCNN1DnCModel
 from ..models.stfttransnc import STFTTransnCModel
 from ..models.wtcnn1dnc import WTCNN1DnCModel
 from ..models.wtresnet1dnc import WTResnet501DnCModel
@@ -30,6 +31,8 @@ def get_model(model_type, yml_config_file=None):
         return STFTTransnCModel()
     elif model_type == 'stftcnn1dnc':
         return STFTCNN1DnCModel()
+    elif model_type == 'melstftcnn1dnc':
+        return MelSTFTCNN1DnCModel()
     elif model_type == 'ffttransnc':
         return FFTTransnCModel()
     elif model_type == 'fftcnn1dnc':
@@ -57,7 +60,7 @@ def unfreeze_parameters(model):
 
 # Check if model use Fourier Transform in first signal extraction
 def check_using_ft(model_type):
-    ft_methods = ['ft', 'fft', 'stft']
+    ft_methods = ['ft', 'fft', 'stft', 'mel']
     return any(method in model_type for method in ft_methods)
 
 

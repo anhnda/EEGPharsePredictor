@@ -6,17 +6,20 @@ from torch.utils.data import Dataset
 
 from . import params
 from .utils.data_utils import LABEL_DICT
+from .utils.augmentation import SamplingRateDegradation
 
 
 class EEGDataset(Dataset):
     def __init__(self, dump_path: str, w_out=3, contain_side: Literal['left', 'right', 'both', 'none'] = 'both',
-                 is_infer=False, minmax_normalized=True):
+                 is_infer=False, minmax_normalized=True, enable_degradation=False, degradation_prob=0.3):
         """
         EEG Dataset
         :param dump_path:
         :param w_out: must be an odd if contain == 'both'
         :param contain_side:
         :param minmax_normalized: set minmax_normalized to False when using Fourier Transform
+        :param enable_degradation: Enable random 256Hz->128Hz degradation during training
+        :param degradation_prob: Probability of degrading a sample (default 0.3 = 30%)
         """
         # data = (start_datetime, eeg, emg, mot, [lbs], mxs)
         # self.is_infer = is_infer
@@ -24,6 +27,14 @@ class EEGDataset(Dataset):
         self.w_out = w_out
         self.contain_side = contain_side
         self.minmax_normalized = minmax_normalized
+        self.enable_degradation = enable_degradation
+        self.degradation_prob = degradation_prob
+
+        # Initialize degradation transform if enabled
+        if self.enable_degradation and not is_infer:
+            self.degrader = SamplingRateDegradation(orig_freq=256, new_freq=128)
+        else:
+            self.degrader = None
         data = joblib.load(dump_path)
         if len(data) == 6:
             self.start_datetime, self.eeg, self.emg, self.mot, self.lbs, self.mxs = data
@@ -50,7 +61,9 @@ class EEGDataset(Dataset):
 
     def __getitem__(self, idx):
         if self.contain_side == 'none':
-            return self._getseq_idx(idx), self._getlb_idx(idx), self._getlb_binary_idx(idx)
+            seqs = self._getseq_idx(idx)
+            lbs = self._getlb_idx(idx)
+            lbs_binary = self._getlb_binary_idx(idx)
         else:
             seqs, lbs, lbs_binary = [[], [], []]
             if self.contain_side == 'right':
@@ -72,6 +85,11 @@ class EEGDataset(Dataset):
             seqs = torch.concat(seqs, dim=-1)
             lbs = torch.stack(lbs)
             lbs_binary = torch.stack(lbs_binary)
+
+        # Apply random degradation during training (not inference)
+        if self.degrader is not None and torch.rand(1).item() < self.degradation_prob:
+            seqs = self.degrader(seqs)  # [3, 5120] -> [3, 2560]
+
         return seqs, lbs, lbs_binary
 
     def _getseq_idx(self, idx):

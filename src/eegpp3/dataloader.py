@@ -47,6 +47,8 @@ class EEGKFoldDataLoader:
             n_workers=0,
             batch_size=4,
             minmax_normalized=True,
+            enable_degradation=False,
+            degradation_prob=0.3,
     ):
         """
         :param dataset_files: must be list of Path to dump file or "default"
@@ -54,9 +56,13 @@ class EEGKFoldDataLoader:
         :param n_workers:
         :param batch_size:
         :param minmax_normalized:
+        :param enable_degradation: Enable random 256Hz->128Hz degradation during training
+        :param degradation_prob: Probability of degrading a sample (default 0.3)
         """
 
         self.minmax_normalized = minmax_normalized
+        self.enable_degradation = enable_degradation
+        self.degradation_prob = degradation_prob
 
         self.val_dataset = None
         self.train_dataset = None
@@ -95,7 +101,13 @@ class EEGKFoldDataLoader:
             # print(type(DUMP_DATA_FILES), DUMP_DATA_FILES)
             dump_file = DUMP_DATA_FILES['train'][i]
             print("Loading dump file {}".format(dump_file))
-            i_dataset = EEGDataset(dump_file, w_out=params.W_OUT, minmax_normalized=self.minmax_normalized)
+            i_dataset = EEGDataset(
+                dump_file,
+                w_out=params.W_OUT,
+                minmax_normalized=self.minmax_normalized,
+                enable_degradation=self.enable_degradation,
+                degradation_prob=self.degradation_prob
+            )
             datasets.append(i_dataset)
             train_val_dt, test_dt = random_split(i_dataset, [0.9, 0.1], generator=self.split_generator)
             train_val_dts.append(train_val_dt)

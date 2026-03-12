@@ -63,12 +63,27 @@ class EEGKFoldTrainer:
         self.models = [get_model(model_type) for _ in range(n_splits)]
         self.optimizers = [Adam(model.parameters(), lr=lr, weight_decay=weight_decay) for model in self.models]
 
+        # Enable degradation for melstft models to train on mixed 256Hz/128Hz data
+        enable_degradation = 'melstft' in self.model_type.lower()
+
         if check_using_ft(self.model_type):
-            self.dataloaders = EEGKFoldDataLoader(n_splits=n_splits, batch_size=batch_size, n_workers=n_workers,
-                                                  minmax_normalized=False)
+            self.dataloaders = EEGKFoldDataLoader(
+                n_splits=n_splits,
+                batch_size=batch_size,
+                n_workers=n_workers,
+                minmax_normalized=False,
+                enable_degradation=enable_degradation,
+                degradation_prob=0.3
+            )
         else:
-            self.dataloaders = EEGKFoldDataLoader(n_splits=n_splits, batch_size=batch_size, n_workers=n_workers,
-                                                  minmax_normalized=True)
+            self.dataloaders = EEGKFoldDataLoader(
+                n_splits=n_splits,
+                batch_size=batch_size,
+                n_workers=n_workers,
+                minmax_normalized=True,
+                enable_degradation=False,
+                degradation_prob=0.0
+            )
 
         self.loss_fn_train = torch.nn.CrossEntropyLoss(ignore_index=-1)
         w_binary = torch.tensor([0.1, 1], dtype=torch.float32, device=self.device)
@@ -411,5 +426,5 @@ class EEGKFoldTrainer:
 if __name__ == '__main__':
     trainer = EEGKFoldTrainer(model_type=params.MODEL_TYPE, lr=params.LEARNING_RATE, n_splits=params.N_SPLITS,
                               n_epochs=params.NUM_EPOCHS, accelerator=params.ACCELERATOR, devices=params.DEVICES)
-    # trainer.fit()
-    trainer.test()
+    trainer.fit()
+    # trainer.test()
