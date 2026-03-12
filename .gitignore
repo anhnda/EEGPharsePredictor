@@ -14,3 +14,4 @@ src/eegpp2/data/__pycache__/*
 dist/*
 src/eegpp3_beta.egg-info/*
 src/eegpp3/out/checkpoints/*
+git.push

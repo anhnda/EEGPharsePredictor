@@ -73,10 +73,18 @@ class MelSTFTEmbedding(nn.Module):
         )
 
     def _detect_sampling_rate(self, seq_length):
-        """Detect sampling rate from sequence length (4s chunks)."""
-        if seq_length >= 900:  # ~1024 samples = 256Hz
+        """
+        Detect sampling rate from sequence length.
+
+        For W_OUT=5 (5 chunks of 4s each = 20s total):
+        - 256Hz: 5 × 1024 = 5120 samples
+        - 128Hz: 5 × 512 = 2560 samples
+
+        Threshold at midpoint: (5120 + 2560) / 2 = 3840
+        """
+        if seq_length >= 3840:  # Closer to 5120 = 256Hz
             return 256
-        else:  # ~512 samples = 128Hz
+        else:  # Closer to 2560 = 128Hz
             return 128
 
     def _compute_stft(self, x, sampling_rate):
@@ -114,7 +122,7 @@ class MelSTFTEmbedding(nn.Module):
             x: Input signal [batch, seq_len] where seq_len = 5120 for 256Hz or ~2560 for 128Hz
 
         Returns:
-            Mel spectrogram [batch, n_mels, num_frames]
+            Mel spectrogram [batch, n_mels, num_frames] - padded to consistent frame count
         """
         # Detect sampling rate from input length
         seq_length = x.size(-1)
@@ -129,12 +137,21 @@ class MelSTFTEmbedding(nn.Module):
         else:  # 128Hz
             # For 128Hz, compute mel on 0-64Hz, result will naturally represent limited bandwidth
             mel_spec = self.mel_scale_128(magnitude)
-            # Note: The mel filterbank for 128Hz is configured with fmax=64Hz,
-            # so it naturally represents the limited frequency range.
-            # No explicit padding needed as the model will learn the 128Hz signal characteristics.
 
         # Apply log compression with small epsilon for numerical stability
         mel_spec = torch.log(mel_spec + 1e-9)
+
+        # Pad time dimension to ensure consistent frame count for both sampling rates
+        # This prevents dimension collapse in CNN pooling layers
+        target_frames = 11  # Target frame count (matches 256Hz with default config)
+        current_frames = mel_spec.size(-1)
+
+        if current_frames < target_frames:
+            # Pad on the right side with zeros (or last frame repeated)
+            padding_frames = target_frames - current_frames
+            # Replicate last frame to maintain temporal continuity
+            last_frame = mel_spec[..., -1:].repeat(1, 1, padding_frames)
+            mel_spec = torch.cat([mel_spec, last_frame], dim=-1)
 
         return mel_spec
 

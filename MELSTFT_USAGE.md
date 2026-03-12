@@ -107,12 +107,29 @@ The model **automatically detects** sampling rate from input sequence length:
 Located in `src/eegpp3/models/melstftcnn1dnc.py`:
 ```python
 def _detect_sampling_rate(self, seq_length):
-    """Detect sampling rate from sequence length (4s chunks)."""
-    if seq_length >= 900:  # ~1024 samples = 256Hz
+    """
+    Detect sampling rate from sequence length.
+
+    For W_OUT=5 (5 chunks of 4s each = 20s total):
+    - 256Hz: 5 × 1024 = 5120 samples
+    - 128Hz: 5 × 512 = 2560 samples
+
+    Threshold at midpoint: (5120 + 2560) / 2 = 3840
+    """
+    if seq_length >= 3840:  # Closer to 5120 = 256Hz
         return 256
-    else:  # ~512 samples = 128Hz
+    else:  # Closer to 2560 = 128Hz
         return 128
 ```
+
+### Frame Count Normalization
+
+To prevent dimension collapse in CNN pooling layers, the mel spectrograms from both sampling rates are padded to a consistent frame count (11 frames):
+
+- **256Hz**: Naturally produces ~11 frames → No padding needed
+- **128Hz**: Produces ~6 frames → Padded to 11 frames by replicating last frame
+
+This ensures the CNN architecture works correctly for both sampling rates.
 
 ### Preparing 128Hz Data for Inference
 
