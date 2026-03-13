@@ -14,7 +14,7 @@ def parse_arguments():
     parser.add_argument("--lr", type=float, default=5e-4)
     parser.add_argument("--batch_size", type=int, default=10)
     parser.add_argument("--n_epochs", type=int, default=2)
-    parser.add_argument("--n_splits", type=int, default=2)
+    parser.add_argument("--n_splits", type=int, default=5)
     parser.add_argument("--n_workers", type=int, default=0)
     parser.add_argument("--resume_checkpoint", type=bool, default=False)
     parser.add_argument("--checkpoint_path", type=str, default=None)
