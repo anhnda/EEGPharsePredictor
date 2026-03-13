@@ -6,7 +6,6 @@ from torch.utils.data import Dataset
 
 from . import params
 from .utils.data_utils import LABEL_DICT
-from .utils.augmentation import SamplingRateDegradation
 
 
 class EEGDataset(Dataset):
@@ -18,8 +17,8 @@ class EEGDataset(Dataset):
         :param w_out: must be an odd if contain == 'both'
         :param contain_side:
         :param minmax_normalized: set minmax_normalized to False when using Fourier Transform
-        :param enable_degradation: Enable random 256Hz->128Hz degradation during training
-        :param degradation_prob: Probability of degrading a sample (default 0.3 = 30%)
+        :param enable_degradation: DEPRECATED - degradation now handled at batch level in collate_fn
+        :param degradation_prob: DEPRECATED - degradation now handled at batch level in collate_fn
         """
         # data = (start_datetime, eeg, emg, mot, [lbs], mxs)
         # self.is_infer = is_infer
@@ -27,14 +26,11 @@ class EEGDataset(Dataset):
         self.w_out = w_out
         self.contain_side = contain_side
         self.minmax_normalized = minmax_normalized
+
+        # Note: Degradation parameters kept for backward compatibility but not used
+        # Degradation is now applied at batch level via custom collate_fn
         self.enable_degradation = enable_degradation
         self.degradation_prob = degradation_prob
-
-        # Initialize degradation transform if enabled
-        if self.enable_degradation and not is_infer:
-            self.degrader = SamplingRateDegradation(orig_freq=256, new_freq=128)
-        else:
-            self.degrader = None
         data = joblib.load(dump_path)
         if len(data) == 6:
             self.start_datetime, self.eeg, self.emg, self.mot, self.lbs, self.mxs = data
@@ -86,9 +82,8 @@ class EEGDataset(Dataset):
             lbs = torch.stack(lbs)
             lbs_binary = torch.stack(lbs_binary)
 
-        # Apply random degradation during training (not inference)
-        if self.degrader is not None and torch.rand(1).item() < self.degradation_prob:
-            seqs = self.degrader(seqs)  # [3, 5120] -> [3, 2560]
+        # Note: Degradation removed from here - now handled at batch level in collate_fn
+        # This ensures all samples in a batch have the same shape for proper stacking
 
         return seqs, lbs, lbs_binary
 

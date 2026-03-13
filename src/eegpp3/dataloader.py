@@ -9,6 +9,7 @@ from .data import DUMP_DATA_FILES, DUMP_DATA_DIR
 from . import params
 from .dataset import EEGDataset
 from .utils.data_utils import get_dataset_train
+from .utils.collate import create_collate_fn
 
 LABEL_MARKER = "EpochNo"
 
@@ -63,6 +64,17 @@ class EEGKFoldDataLoader:
         self.minmax_normalized = minmax_normalized
         self.enable_degradation = enable_degradation
         self.degradation_prob = degradation_prob
+
+        # Create collate function for homogeneous batch degradation
+        self.train_collate_fn = create_collate_fn(
+            enable_degradation=enable_degradation,
+            degradation_prob=degradation_prob
+        )
+        # Val/test use no degradation (always 256Hz)
+        self.eval_collate_fn = create_collate_fn(
+            enable_degradation=False,
+            degradation_prob=0.0
+        )
 
         self.val_dataset = None
         self.train_dataset = None
@@ -159,7 +171,8 @@ class EEGKFoldDataLoader:
             shuffle=False,
             sampler=RandomSampler(self.train_dataset, generator=self.dataloader_generator),
             num_workers=self.n_workers,
-            drop_last=True
+            drop_last=True,
+            collate_fn=self.train_collate_fn  # Apply batch-level degradation
         )
 
     def val_dataloader(self):
@@ -169,6 +182,7 @@ class EEGKFoldDataLoader:
             shuffle=False,
             num_workers=self.n_workers,
             drop_last=True,
+            collate_fn=self.eval_collate_fn  # No degradation for validation
         )
 
     def test_dataloader(self):
@@ -178,6 +192,7 @@ class EEGKFoldDataLoader:
             shuffle=False,
             num_workers=self.n_workers,
             drop_last=True,
+            collate_fn=self.eval_collate_fn  # No degradation for testing
         )
 
 
