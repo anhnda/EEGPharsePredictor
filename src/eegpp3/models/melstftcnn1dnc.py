@@ -13,10 +13,12 @@ class MelSTFTEmbedding(nn.Module):
     Mel-scale STFT embedding with adaptive parameters for 128Hz and 256Hz sampling rates.
 
     Strategy:
-    - 256Hz input (1024 samples): n_fft=2048, hop=512, captures 0-128Hz
-    - 128Hz input (512 samples): n_fft=1024, hop=256, captures 0-64Hz, pad 64-128Hz with zeros
+    - 256Hz input (1024 samples): n_fft=2048, hop=512, 64 mel bins covering 0-128Hz
+    - 128Hz input (512 samples): n_fft=1024, hop=256, 32 mel bins covering 0-64Hz + 32 zero-padded bins for 64-128Hz
 
-    Both produce mel spectrograms in 0-128Hz range with n_mels bins.
+    Both produce aligned mel spectrograms [n_mels=64, num_frames] where:
+    - Lower 32 bins: 0-64Hz (real data for both; 128Hz limited by Nyquist)
+    - Upper 32 bins: 64-128Hz (real data for 256Hz; zeros for 128Hz)
     """
 
     def __init__(
@@ -50,7 +52,7 @@ class MelSTFTEmbedding(nn.Module):
         self.normalized = normalized
 
         # Create mel filterbanks for both sampling rates
-        # 256Hz: sample_rate=256, n_fft=2048
+        # 256Hz: sample_rate=256, n_fft=2048, covers full 0-128Hz range
         self.mel_scale_256 = torchaudio.transforms.MelScale(
             n_mels=n_mels,
             sample_rate=256,
@@ -61,12 +63,14 @@ class MelSTFTEmbedding(nn.Module):
             mel_scale='htk'
         )
 
-        # 128Hz: sample_rate=128, n_fft=1024, but output will be padded
+        # 128Hz: sample_rate=128, n_fft=1024, covers 0-64Hz (Nyquist limit)
+        # Use half the mel bins, then pad high-frequency bins with zeros
+        self.n_mels_128 = n_mels // 2  # 32 bins for 0-64Hz
         self.mel_scale_128 = torchaudio.transforms.MelScale(
-            n_mels=n_mels,
+            n_mels=self.n_mels_128,
             sample_rate=128,
             f_min=fmin,
-            f_max=min(64, fmax),  # 128Hz can only capture up to 64Hz
+            f_max=64,  # 128Hz can only capture up to 64Hz (Nyquist limit)
             n_stft=n_fft_128 // 2 + 1,
             norm='slaney',
             mel_scale='htk'
@@ -133,10 +137,20 @@ class MelSTFTEmbedding(nn.Module):
 
         # Apply mel filterbank
         if sampling_rate == 256:
-            mel_spec = self.mel_scale_256(magnitude)
+            mel_spec = self.mel_scale_256(magnitude)  # [batch, 64, num_frames]
         else:  # 128Hz
-            # For 128Hz, compute mel on 0-64Hz, result will naturally represent limited bandwidth
-            mel_spec = self.mel_scale_128(magnitude)
+            # For 128Hz, compute mel on 0-64Hz (32 bins), then pad high-freq bins
+            mel_spec_low = self.mel_scale_128(magnitude)  # [batch, 32, num_frames]
+
+            # Pad with zeros for 64-128Hz range (missing high-frequency content)
+            # This aligns with 256Hz mel spectrogram structure
+            batch_size = mel_spec_low.size(0)
+            num_frames = mel_spec_low.size(-1)
+            high_freq_padding = torch.zeros(
+                batch_size, self.n_mels - self.n_mels_128, num_frames,
+                device=mel_spec_low.device, dtype=mel_spec_low.dtype
+            )
+            mel_spec = torch.cat([mel_spec_low, high_freq_padding], dim=1)  # [batch, 64, num_frames]
 
         # Apply log compression with small epsilon for numerical stability
         mel_spec = torch.log(mel_spec + 1e-9)
