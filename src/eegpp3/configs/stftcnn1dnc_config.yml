@@ -1,8 +1,23 @@
 num_chains: 3
+
+# STFT parameters for 256Hz sampling
+n_fft_256: 2048
+win_length_256: 2048
+hop_length_256: 512
+
+# STFT parameters for 128Hz sampling
+n_fft_128: 1024
+win_length_128: 1024
+hop_length_128: 256
+
+# Legacy parameters (kept for backward compatibility)
 n_fft: 2048
 win_length: 2048
 hop_length: 512
+
 normalized: True
+
+# Conv1D layers - input channels = n_fft_256//2+1 (1025 frequency bins)
 conv_layers:
   - name: conv1
     out_channels: 4096
