@@ -42,7 +42,7 @@ class HomogeneousBatchCollate:
 
         Args:
             batch: List of tuples (seqs, lbs, lbs_binary) from dataset
-                   Each seqs is [3, 5120] at 256Hz
+                   Each seqs is [3, 5120] at 256Hz (or shorter for incomplete segments)
 
         Returns:
             seqs: Batched tensor [B, 3, 5120] or [B, 3, 2560]
@@ -54,8 +54,20 @@ class HomogeneousBatchCollate:
         lbs_list = [item[1] for item in batch]
         lbs_binary_list = [item[2] for item in batch]
 
-        # Stack into batches (all same shape from dataset)
-        seqs = torch.stack(seqs_list, dim=0)  # [B, 3, 5120]
+        # Find max sequence length in batch and pad if needed
+        max_length = max(seq.shape[-1] for seq in seqs_list)
+        padded_seqs = []
+        for seq in seqs_list:
+            if seq.shape[-1] < max_length:
+                # Pad with zeros to match max_length
+                pad_size = max_length - seq.shape[-1]
+                padded_seq = torch.nn.functional.pad(seq, (0, pad_size), mode='constant', value=0)
+                padded_seqs.append(padded_seq)
+            else:
+                padded_seqs.append(seq)
+
+        # Stack into batches (now all same shape after padding)
+        seqs = torch.stack(padded_seqs, dim=0)  # [B, 3, max_length]
         lbs = torch.stack(lbs_list, dim=0)
         lbs_binary = torch.stack(lbs_binary_list, dim=0)
 

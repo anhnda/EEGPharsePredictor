@@ -4,7 +4,6 @@ import dropbox
 import joblib
 import numpy as np
 from tqdm import tqdm
-from scipy.signal import resample_poly
 from ..data import SEQ_FILES, LABEL_FILES, DUMP_DATA_FILES
 from .. import params
 from ..utils.common_utils import get_path_slash, convert_ms2datetime, convert_datetime2ms
@@ -170,11 +169,7 @@ def load_seq_only(data_files=SEQ_FILES, step_ms=None):
                     tmp_ms = ms
                 if ms - tmp_ms >= step_ms:
                     start_ms.append(tmp_ms)
-                    # For 512 up to 1024
-                    if len(tmp_eeg) == params.MAX_SEQ_SIZE // 2:
-                        tmp_eeg = resample_poly(tmp_eeg,2,1)
-                        tmp_emg = resample_poly(tmp_emg,2,1)
-                        tmp_mot = resample_poly(tmp_mot,2,1)
+                    # No upsampling - keep data at original Hz
                     eeg.append(tmp_eeg)
                     emg.append(tmp_emg)
                     mot.append(tmp_mot)
