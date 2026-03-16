@@ -15,6 +15,7 @@ from .dataset import EEGDataset
 from .utils.common_utils import get_path_slash
 from .utils.data_utils import dump_seq_with_no_labels, LABEL_DICT
 from .utils.model_utils import get_model, check_using_ft, freeze_parameters
+from .utils.collate import create_collate_fn
 
 torch.set_float32_matmul_precision('medium')
 def ensureDir(path):
@@ -180,7 +181,8 @@ def infer2(opts=None):
             BASE_NAME = BASE_NAME[4:]
 
 
-        dataloader = DataLoader(infer_ds, batch_size=batch_size, shuffle=False, num_workers=0,drop_last=True)
+        collate_fn = create_collate_fn(enable_degradation=False, degradation_prob=0.0)
+        dataloader = DataLoader(infer_ds, batch_size=batch_size, shuffle=False, num_workers=0, drop_last=True, collate_fn=collate_fn)
 
         dataloader = fabric.setup_dataloaders(dataloader)
         softmax = torch.nn.Softmax(dim=-1)
@@ -264,7 +266,8 @@ def infer(data_path, infer_path=None, model_type='stftcnn1dnc', batch_size=10, n
         devices='auto'
     )
 
-    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=False, num_workers=n_workers)
+    collate_fn = create_collate_fn(enable_degradation=False, degradation_prob=0.0)
+    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=False, num_workers=n_workers, collate_fn=collate_fn)
     model = get_checkpoint(model_type, torchscript=False, map_to_device=fabric.device)
 
     fabric.print(f"Using: {fabric.device}")
