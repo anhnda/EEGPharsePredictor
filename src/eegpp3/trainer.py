@@ -63,8 +63,9 @@ class EEGKFoldTrainer:
         self.models = [get_model(model_type) for _ in range(n_splits)]
         self.optimizers = [Adam(model.parameters(), lr=lr, weight_decay=weight_decay) for model in self.models]
 
-        # Enable degradation for melstft models to train on mixed 256Hz/128Hz data
-        enable_degradation = 'melstft' in self.model_type.lower()
+        # Enable degradation for STFT/FFT models to train on mixed 256Hz/128Hz data
+        # Both melstft and stftcnn1dnc have adaptive STFT layers that support dual Hz
+        enable_degradation = any(model in self.model_type.lower() for model in ['melstft', 'stftcnn1dnc', 'stft'])
 
         if check_using_ft(self.model_type):
             self.dataloaders = EEGKFoldDataLoader(

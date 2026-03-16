@@ -46,10 +46,13 @@ class EEGDataset(Dataset):
         # else:
         #     self.start_datetime, self.eeg, self.emg, self.mot, self.mxs = joblib.load(dump_path)
         #     self.lbs = []
-        #print(len(self.eeg[0]))
-        #exit(-1)
-        self.segment_length = params.MAX_SEQ_SIZE
-        assert self.segment_length == len(self.eeg[0])
+
+        # Use actual sequence length from data (supports both 128Hz and 256Hz)
+        # Model (stftcnn1dnc) auto-detects sampling rate from sequence length
+        if len(self.eeg) > 0:
+            self.segment_length = len(self.eeg[0])
+        else:
+            self.segment_length = params.MAX_SEQ_SIZE
 
 
     def __len__(self):
