@@ -1,6 +1,7 @@
-# EEG Phase Predictor ver 3
+# EEG Phase Predictor ver 2.3
 
 **Note: This is beta version, use for training with default dataset and inference only
+** Support 128Hz and 256Hz input sampling **
 
 ## Setup
 

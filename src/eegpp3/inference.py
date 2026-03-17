@@ -105,11 +105,11 @@ def get_checkpoint(model_type, torchscript=False, map_to_device=torch.device('cp
         raise NotImplemented("Not Implemented for torchscript converter")
     else:
         model = get_model(model_type)
-        best_checkpoint = os.path.join(OUT_DIR, 'checkpoints', f'{model_type}_best.pkl')
+        best_checkpoint = os.path.join(OUT_DIR, 'checkpoints', f'{model_type}_best_dx.pkl')
         if not os.path.exists(best_checkpoint):
             download_storage(
                 remote_type='checkpoints',
-                file=f'{model_type}_best.pkl'
+                file=f'{model_type}_best_dx.pkl'
             )
         state_dict = torch.load(best_checkpoint, weights_only=True, map_location=map_to_device)
         model.load_state_dict(state_dict['model_state_dict'])
